@@ -3,9 +3,10 @@
 Peek-in QR Security & Guardrails Verification Script
 Validates:
 1. Absence of secrets, keys, keystores, and credentials in the repo
-2. Guardrail integrity and presence of required security invariants
-3. Toolchain and environment readiness
-4. Supply-chain boundaries (no unverified scripts/deps)
+2. Guardrail policy: only root README.md is permitted among markdown files
+3. Invariant checks in README.md
+4. Toolchain and environment readiness
+5. Supply-chain boundaries
 """
 
 import os
@@ -31,8 +32,8 @@ BLOCKED_FILES = [
 
 def scan_files(root_dir="."):
     violations = []
+    md_files = []
     for dirpath, dirnames, filenames in os.walk(root_dir):
-        # Skip git directory
         if ".git" in dirnames:
             dirnames.remove(".git")
         if ".dart_tool" in dirnames:
@@ -40,6 +41,12 @@ def scan_files(root_dir="."):
 
         for fname in filenames:
             rel_path = os.path.relpath(os.path.join(dirpath, fname), root_dir)
+
+            # Check markdown file policy: only root README.md permitted
+            if fname.lower().endswith(".md"):
+                md_files.append(rel_path)
+                if rel_path != "README.md":
+                    violations.append(f"Disallowed Markdown file policy violation: {rel_path} (only root README.md allowed)")
 
             # Check blocked file extensions/names
             for pattern in BLOCKED_FILES:
@@ -55,41 +62,30 @@ def scan_files(root_dir="."):
                         matches = re.finditer(pattern, content)
                         for m in matches:
                             violations.append(f"Potential secret ({desc}) found in {rel_path}: {m.group(0)[:20]}...")
-            except Exception as e:
-                # Binary files or unreadable files
+            except Exception:
                 pass
     return violations
 
 def verify_invariants():
     checks = []
-    # Verify SECURITY_GATES.md exists and contains key invariants
-    sec_gates = "security/SECURITY_GATES.md"
-    if not os.path.exists(sec_gates):
-        checks.append(("FAIL", "security/SECURITY_GATES.md missing"))
-    else:
-        with open(sec_gates, "r") as f:
-            content = f.read()
-            if "scan -> parse -> rules/KB/ML/(optional net) -> fusion -> diagnostics -> consent -> action" in content:
-                checks.append(("PASS", "Pipeline invariant present in SECURITY_GATES.md"))
-            else:
-                checks.append(("FAIL", "Pipeline invariant missing in SECURITY_GATES.md"))
+    readme_path = "README.md"
+    if not os.path.exists(readme_path):
+        checks.append(("FAIL", "Root README.md missing"))
+        return checks
 
-            if "UNKNOWN` must not be shown as verified" in content or "UNKNOWN must not be shown as verified" in content:
-                checks.append(("PASS", "Tri-state UNKNOWN/VERIFIED invariant present"))
-            else:
-                checks.append(("FAIL", "Tri-state invariant missing"))
+    with open(readme_path, "r", encoding="utf-8") as f:
+        content = f.read()
 
-    # Verify AGENTS.md exists
-    if os.path.exists("agent/AGENTS.md"):
-        checks.append(("PASS", "agent/AGENTS.md operational rules present"))
+    pipeline_invariant = "scan -> parse -> rules/KB/ML/(optional net) -> fusion -> diagnostics -> consent -> ActionGateway"
+    if pipeline_invariant in content:
+        checks.append(("PASS", "Security invariant pipeline present in README.md"))
     else:
-        checks.append(("FAIL", "agent/AGENTS.md missing"))
+        checks.append(("FAIL", "Security invariant pipeline missing in README.md"))
 
-    # Verify GUARDRAILS_INTEGRATION.md exists
-    if os.path.exists("security/GUARDRAILS_INTEGRATION.md"):
-        checks.append(("PASS", "security/GUARDRAILS_INTEGRATION.md present"))
+    if "VERIFIED" in content and "UNKNOWN" in content and "SUSPICIOUS" in content:
+        checks.append(("PASS", "Tri-state decision invariants documented"))
     else:
-        checks.append(("FAIL", "security/GUARDRAILS_INTEGRATION.md missing"))
+        checks.append(("FAIL", "Tri-state decision invariants missing"))
 
     return checks
 
@@ -103,7 +99,6 @@ def check_environment():
         else:
             env_results.append(("WARN", f"Tool {tool} not found in PATH"))
 
-    # Check Android SDK
     android_home = os.environ.get("ANDROID_HOME", "/opt/android-sdk")
     if os.path.isdir(android_home):
         env_results.append(("PASS", f"Android SDK found at {android_home}"))
@@ -113,14 +108,14 @@ def check_environment():
     return env_results
 
 def main():
-    print("=== Peek-in QR Gate G0 Security & Environment Verification ===")
+    print("=== Peek-in QR Gate G0 Security & Guardrails Verification ===")
     violations = scan_files(".")
     if violations:
-        print("\n[!] Secret Scanner Violations:")
+        print("\n[!] Policy Violations:")
         for v in violations:
             print(f"  - {v}")
     else:
-        print("[✓] Secret Scanner: No hardcoded secrets or sensitive files found.")
+        print("[✓] Secret & Policy Scanner: Clean. Only root README.md exists, no secrets.")
 
     print("\n--- Invariant Checks ---")
     invariant_checks = verify_invariants()

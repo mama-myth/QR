@@ -1,6 +1,7 @@
 import '../kb/kb_models.dart';
 import '../kb/kb_repository.dart';
 import '../payload/parsed_payload.dart';
+import '../ml/model_adapter.dart';
 import '../rules/rule_engine.dart';
 import '../rules/rule_evidence.dart';
 import 'evaluation_result.dart';
@@ -11,14 +12,18 @@ class FusionEngine {
   static const String policyVersion = '1.0.0';
 
   final KnowledgeBaseRepository? kbRepository;
+  final MlModelAdapter? mlAdapter;
 
-  const FusionEngine({this.kbRepository});
+  const FusionEngine({
+    this.kbRepository,
+    this.mlAdapter,
+  });
 
-  /// Evaluates a parsed payload deterministically across rule engine and KB.
+  /// Evaluates a parsed payload deterministically across rule engine, KB, and ML adapter.
   EvaluationResult evaluate(ParsedPayload payload, {bool isNetworkAvailable = false}) {
     final degradationFlags = <String, bool>{
       'kbAvailable': kbRepository != null,
-      'mlAvailable': false, // Module M8 marked UNAVAILABLE per proposal requirements
+      'mlAvailable': mlAdapter != null && mlAdapter!.isModelLoaded,
       'networkAvailable': isNetworkAvailable,
     };
 

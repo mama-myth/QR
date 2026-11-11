@@ -42,23 +42,27 @@ Peek-in QR acts as an isolated pre-navigation gatekeeper. All QR payloads remain
 
 ## Key Features
 
-The project incorporates multiple analysis modules and defensive controls. Features are strictly classified by their current development state:
+The project incorporates multiple analysis modules and defensive controls. Features are strictly classified by their verified development state:
 
 | Feature | Category | Status | Details |
 |---|---|---|---|
-| **Typed Safe Parsers** | Core Payload | **Implemented** | Bounded, side-effect-free parsers for URL, UPI (`upi://pay`), Phone (`tel:`), Wi-Fi (`WIFI:...`), and Text formats. |
-| **Deterministic Security Analyzers** | Core Rules | **Implemented** | Checks for raw IP hosts, IDN/Punycode confusables, embedded userinfo, duplicate parameters, invalid UPI formats, open Wi-Fi networks, and prompt injections. |
-| **Immutable Rule Evidence** | Explainability | **Implemented** | Structured diagnostic findings with outcome states (`matched`, `notMatched`, `inconclusive`, `error`) and severity levels. |
-| **Local Knowledge Base** | Trust Authority | **Implemented** | In-memory/SQLite repository supporting SHA-256 pattern lookup, trust assertions, provenance tracking, and expiration enforcement. |
-| **Tri-State Evidence Fusion** | Policy Engine | **Implemented** | Positive-proof policy: `VERIFIED` requires authenticated KB proof + clean rules; malicious findings yield `SUSPICIOUS`; lack of proof defaults to `UNKNOWN`. |
-| **Pre-Navigation ActionGateway** | Security Gate | **Implemented** | Sole pathway for external intent dispatch; blocks `SUSPICIOUS` verdicts, enforces two-step consent for `UNKNOWN`, and invalidates single-use `ConsentToken` instances. |
-| **Diagnostic UI & Inert Scanner** | User Interface | **Implemented** | Viewfinder and manual entry UI with launch badges, explainable reasons list, degraded component chips, and redacted target previews. |
-| **Android Quick Settings Tile** | Native Platform | **Implemented** | Native Kotlin `PeekQuickSettingsTileService` allowing single-tap scanner launch without auto-execution. |
-| **Scan History with Redaction** | Privacy & Audit | **Implemented** | Local history recording masked summaries, scan IDs, and consent states; raw payloads excluded by default with complete local deletion. |
-| **On-Device ML Feature Extractor** | Machine Learning | **Implemented** | Deterministic numerical extraction (entropy, digit ratio, symbol ratio, host depth, flags). |
-| **On-Device ML Inference Adapter** | Machine Learning | **Planned / Adapter Implemented** | Adapter safely reports `unavailable` until a licensed, provenance-validated model artifact is acquired. |
-| **Network Reputation Service** | Backend | **Planned** | Optional FastAPI + Redis threat-intelligence lookup service following privacy-preserving hash-prefix protocols. |
-| **Signed Knowledge Base Updates** | Supply Chain | **Planned** | Monotonic versioned delta synchronization with anti-rollback and cryptographic signature verification. |
+| **Typed Safe Parsers** | Core Payload | **Implemented & Verified** | Bounded, side-effect-free parsers for URL, UPI (`upi://pay`), Phone (`tel:`), Wi-Fi (`WIFI:...`), and Text formats (`apps/mobile/lib/core/payload/`). |
+| **Deterministic Security Analyzers** | Core Rules | **Implemented & Verified** | Analyzers for raw IP hosts, IDN/Punycode confusables, embedded userinfo, duplicate parameters, invalid UPI formats, open Wi-Fi networks, and prompt injections (`apps/mobile/lib/core/rules/`). |
+| **Immutable Rule Evidence** | Explainability | **Implemented & Verified** | Structured diagnostic findings with outcome states (`matched`, `notMatched`, `inconclusive`, `error`) and severity levels. |
+| **Local Knowledge Base** | Trust Authority | **Implemented & Verified** | SQLite-compatible repository supporting SHA-256 pattern lookup, trust assertions, provenance tracking, and expiration enforcement (`apps/mobile/lib/core/kb/`). |
+| **Tri-State Evidence Fusion** | Policy Engine | **Implemented & Verified** | Positive-proof policy: `VERIFIED` requires authenticated KB proof + clean rules; malicious findings yield `SUSPICIOUS`; lack of proof defaults to `UNKNOWN`. |
+| **Pre-Navigation ActionGateway** | Security Gate | **Implemented & Verified** | Sole pathway for external intent dispatch; blocks `SUSPICIOUS` verdicts, enforces two-step consent for `UNKNOWN`, and invalidates single-use `ConsentToken` instances. |
+| **Diagnostic UI & Inert Scanner** | User Interface | **Implemented & Verified** | Viewfinder and manual entry UI with launch badges, explainable reasons list, degraded component chips, and redacted target previews. |
+| **Android Quick Settings Tile** | Native Platform | **Implemented & Verified** | Native Kotlin `PeekQuickSettingsTileService` allowing single-tap scanner launch without auto-execution. |
+| **Scan History with Redaction** | Privacy & Audit | **Implemented & Verified** | Local history recording masked summaries, scan IDs, and consent states; raw payloads excluded by default with complete local deletion. |
+| **On-Device ML Feature Extractor** | Machine Learning | **Implemented & Verified** | Deterministic numerical extraction (entropy, digit ratio, symbol ratio, host depth, flags) in `apps/mobile/lib/core/ml/feature_extractor.dart`. |
+| **On-Device ML Inference Adapter** | Machine Learning | **Adapter Implemented** | Adapter safely reports `unavailable` until a licensed, provenance-validated model artifact is acquired, preserving safe deterministic fallback. |
+| **Network Reputation Service** | Backend | **Implemented & Verified** | FastAPI microservice in `services/reputation/` with strict Pydantic schemas rejecting raw URLs/PII, Redis TTL caching, and in-memory fallback. |
+| **Safe Reputation Client** | Client Network | **Implemented & Verified** | Dart `SafeReputationClient` transmitting only SHA-256 hash tokens, with timeouts falling back safely to `UNAVAILABLE` without blocking offline analysis. |
+| **Signed Knowledge Base Updates** | Supply Chain | **Implemented & Verified** | `SignedKnowledgeBaseDelta` with HMAC-SHA256 signature verification over pinned keys, monotonic version anti-rollback (`deltaVersion > currentVersion`), and atomic rollback (`apps/mobile/lib/core/kb/kb_sync.dart`). |
+| **Diagnostic Report Generator** | Audit & Export | **Implemented & Verified** | Machine-readable and redacted diagnostic export generator (`apps/mobile/lib/core/kb/report_generator.dart`) with mandatory redaction of secrets. |
+| **Performance Benchmark Suite** | Performance | **Implemented & Verified** | Automated latency benchmark suite (`apps/mobile/test/performance_benchmark_test.dart`) verifying local decision path latency is well under the <100ms threshold. |
+| **Android APK Build** | Distribution | **Built & Verified** | Successfully assembled installable debug APK (`apps/mobile/build/app/outputs/flutter-apk/app-debug.apk`) against Android SDK (minSdk 26). |
 
 ---
 
@@ -71,16 +75,18 @@ flowchart TD
     A[Physical QR Code] -->|Scan / Capture| B[Camera Decoder / Tile]
     B -->|Inert Raw Payload| C[Typed Payload Parser]
     C -->|URL, UPI, Phone, Wi-Fi, Text| D[Deterministic Rule Analyzers]
-    C -->|Pattern Lookup| E[Local Knowledge Base]
+    C -->|Pattern Lookup / Signed Sync| E[Local Knowledge Base]
     C -->|Feature Vector| F[On-Device ML Adapter]
-    D -->|Rule Evidence| G[Evidence Fusion Engine]
-    E -->|Trust Proof / Category| G
-    F -->|ML Status / Confidence| G
-    G -->|VERIFIED / UNKNOWN / SUSPICIOUS| H[Diagnostic Screen]
-    H -->|Masked Preview & Warnings| I{User Consent Check}
-    I -->|Cancel / Dismiss| J[Discard Payload]
-    I -->|Two-Step Consent Token| K[ActionGateway]
-    K -->|Validated Single-Use Intent| L[Destination Action]
+    C -->|SHA-256 Hash Token Only| G[FastAPI Reputation Service]
+    D -->|Rule Evidence| H[Evidence Fusion Engine]
+    E -->|Trust Proof / Category| H
+    F -->|ML Status / Confidence| H
+    G -->|Threat Intelligence Verdict| H
+    H -->|VERIFIED / UNKNOWN / SUSPICIOUS| I[Diagnostic Screen]
+    I -->|Masked Preview & Warnings| J{User Consent Check}
+    J -->|Cancel / Dismiss| K[Discard Payload]
+    J -->|Two-Step Consent Token| L[ActionGateway]
+    L -->|Validated Single-Use Intent| M[Destination Action]
 ```
 
 ### Invariant Pipeline Stages
@@ -88,9 +94,11 @@ flowchart TD
 1. **Inert Decode:** Captured payload strings are stored ephemerally without executing implicit system intents or resolving network URIs.
 2. **Typed Safe Parsing:** Inputs are bounded (max 8,192 characters) and parsed into structured models (`UrlPayload`, `UpiPayload`, `PhonePayload`, `WifiPayload`, `TextPayload`).
 3. **Deterministic Rule Analysis:** Emits typed `RuleEvidence` covering lexical, syntactic, and structural anomalies.
-4. **Knowledge Base Verification:** Performs SHA-256 pattern lookups against local authenticated entities.
-5. **Evidence Fusion:** Evaluates rule findings and KB trust proofs to produce an authoritative tri-state verdict (`VERIFIED`, `UNKNOWN`, or `SUSPICIOUS`).
-6. **ActionGateway Consent:** Validates single-use `ConsentToken` instances to prevent Time-Of-Check to Time-Of-Use (TOCTOU) exploits, blocking suspicious targets and requiring confirmation for unknown targets.
+4. **Knowledge Base Verification & Sync:** Performs SHA-256 pattern lookups against local authenticated entities, with support for cryptographically signed, anti-rollback delta updates.
+5. **On-Device Feature Extraction:** Computes statistical and lexical feature vectors locally with zero network reliance.
+6. **Optional Privacy-Preserving Reputation:** Dispatches anonymous SHA-256 hash tokens to the FastAPI backend without transmitting raw URLs, queries, or PII.
+7. **Evidence Fusion:** Evaluates rule findings and KB trust proofs to produce an authoritative tri-state verdict (`VERIFIED`, `UNKNOWN`, or `SUSPICIOUS`).
+8. **ActionGateway Consent:** Validates single-use `ConsentToken` instances to prevent Time-Of-Check to Time-Of-Use (TOCTOU) exploits, blocking suspicious targets and requiring confirmation for unknown targets.
 
 ---
 
@@ -100,18 +108,19 @@ flowchart TD
 - **Framework:** Flutter 3.41.2 (Dart SDK 3.11.0)
 - **Target Platform:** Android 8.0+ (minimum SDK 26, target SDK 34+)
 - **Native Android Integration:** Kotlin 1.9.22, `TileService` (`PeekQuickSettingsTileService.kt`), Android Platform Channels (`MainActivity.kt`)
-- **Security & Crypto:** Pure Dart cryptographic SHA-256 hashing (`crypto: ^3.0.6`)
-- **Local Storage:** Versioned SQLite-compatible knowledge base and scan history repository
+- **Security & Crypto:** Pure Dart cryptographic SHA-256 and HMAC-SHA256 hashing (`crypto: ^3.0.6`)
+- **Local Storage:** Versioned SQLite-compatible knowledge base and scan history repository with atomic transactions
 - **On-Device ML Architecture:** Pure-Dart `FeatureExtractor` and `MlModelAdapter` abstraction
+
+### Backend Threat Reputation Microservice (`services/reputation/`)
+- **Language & Framework:** Python 3.12, FastAPI, Pydantic 2.14
+- **Web Server:** Uvicorn (ASGI)
+- **Caching & Fallback:** Redis 8.1 client with TTL expiration and in-memory mock cache
+- **Containerization:** Docker (`services/reputation/Dockerfile`)
 
 ### Security Enforcement & Tooling (`scripts/`, `.github/`)
 - **CI / Static Analysis:** GitHub Actions workflow running on Ubuntu, `flutter analyze --fatal-infos`
 - **Security Check Script:** Python 3.12 script (`scripts/security_check.py`) enforcing secret scanning, repository documentation policies, and security invariants
-
-### Planned Backend Service (`services/reputation/`)
-- **Language & Framework:** Python 3.12, FastAPI, Pydantic
-- **Caching & Rate Limiting:** Redis with TTL expiration
-- **Deployment:** Docker containerization
 
 ---
 
@@ -128,6 +137,15 @@ The project follows a monorepo architecture:
 ├── README.md                      # Official project documentation (sole permitted markdown file)
 ├── scripts/
 │   └── security_check.py          # Security verification & policy enforcement runner
+├── services/
+│   └── reputation/                # FastAPI threat reputation microservice
+│       ├── Dockerfile             # Container definition for reputation backend
+│       ├── requirements.txt       # Python dependencies (FastAPI, Redis, Pydantic, Pytest)
+│       ├── app/
+│       │   ├── main.py            # API routes, caching, and rate-limiting
+│       │   └── schemas.py         # Strict PII/URL-blocking Pydantic validation schemas
+│       └── tests/
+│           └── test_reputation_api.py # Automated backend test suite
 └── apps/
     └── mobile/                    # Flutter Android mobile client
         ├── android/               # Native Android configuration and Kotlin tile service
@@ -141,9 +159,10 @@ The project follows a monorepo architecture:
         │   ├── core/
         │   │   ├── execution/     # ActionGateway & ConsentToken model
         │   │   ├── fusion/        # Tri-state FusionEngine & EvaluationResult
-        │   │   ├── kb/            # KnowledgeBaseEntry & repository
+        │   │   ├── kb/            # KnowledgeBaseEntry, sync verifier & report generator
         │   │   ├── ml/            # FeatureExtractor & MlModelAdapter
         │   │   ├── payload/       # ParsedPayload & PayloadParser
+        │   │   ├── reputation/    # SafeReputationClient & network adapter
         │   │   └── rules/         # RuleEngine & deterministic analyzers
         │   └── features/
         │       ├── diagnostics/   # DiagnosticScreen & gated controls
@@ -152,8 +171,11 @@ The project follows a monorepo architecture:
         │   ├── action_gateway_test.dart
         │   ├── fixtures/adversarial_fixtures.dart
         │   ├── fusion_engine_test.dart
+        │   ├── kb_sync_test.dart
         │   ├── ml_test.dart
         │   ├── parsers_and_rules_test.dart
+        │   ├── performance_benchmark_test.dart
+        │   ├── reputation_client_test.dart
         │   └── scanner_screen_test.dart
         └── pubspec.yaml           # Flutter package manifest
 ```
@@ -168,7 +190,8 @@ Ensure the following development toolchains are installed:
 - **Flutter SDK:** Version 3.41.x or later with Dart 3.11.x
 - **Android SDK:** Platforms `android-34` or higher, build-tools `34.0.0` or higher, minimum API 26
 - **Java Development Kit:** OpenJDK 17 or OpenJDK 21
-- **Python:** Python 3.12 or later (for running repository security checks)
+- **Python:** Python 3.12 or later (for running repository security checks and backend service)
+- **Docker:** (Optional) for running containerized backend service
 
 Verify your local environment:
 ```bash
@@ -189,22 +212,32 @@ python3 --version
    python3 scripts/security_check.py
    ```
 
-3. **Install Mobile Dependencies:**
+3. **Install Mobile Dependencies & Run Tests:**
    ```bash
    cd apps/mobile
    flutter pub get
-   ```
-
-4. **Run Static Analysis and Automated Tests:**
-   ```bash
    flutter analyze --fatal-infos
    flutter test
    ```
 
-5. **Run the Application:**
+4. **Build Android APK:**
+   ```bash
+   flutter build apk --debug
+   # Produced APK located at build/app/outputs/flutter-apk/app-debug.apk
+   ```
+
+5. **Run Mobile Client:**
    Launch an Android emulator (API 26+) or connect an Android physical device with USB debugging:
    ```bash
    flutter run -d android
+   ```
+
+6. **Run Reputation Backend (Optional):**
+   ```bash
+   cd services/reputation
+   pip install -r requirements.txt
+   PYTHONPATH=../.. pytest -o cache_dir=/tmp/.pytest_cache tests/
+   uvicorn app.main:app --host 0.0.0.0 --port 8000
    ```
 
 ---
@@ -219,9 +252,10 @@ python3 --version
    - `VERIFIED` strictly requires positive, fresh, authenticated cryptographic proof from the Knowledge Base and zero warning contradictions. Clean rules or low ML scores alone **never** yield `VERIFIED`.
    - `SUSPICIOUS` blocks execution by default with no ordinary bypass.
    - `UNKNOWN` requires explicit, separate two-step confirmation before action execution.
-4. **Component Degradation Resilience:** Missing or unreachable components (KB offline, ML unavailable, network down) default conservatively to `UNKNOWN` and never increase assurance.
-5. **Data Minimization:** Raw QR payloads, full query parameters, Wi-Fi passwords, and payment IDs are never uploaded or persisted by default. Sensitive elements are masked in UI diagnostics and audit logs.
-6. **No Guarantee of Safety:** Security assessments indicate the presence or absence of known risk indicators; no automated tool can guarantee that an external destination is free of risk.
+4. **Anti-Rollback Knowledge Base Updates:** Updates are accepted only if accompanied by a valid cryptographic signature from a pinned root key and possess a strictly monotonic version increment (`deltaVersion > currentVersion`).
+5. **Component Degradation Resilience:** Missing or unreachable components (KB offline, ML unavailable, network down) default conservatively to `UNKNOWN` and never increase assurance.
+6. **Data Minimization:** Raw QR payloads, full query parameters, Wi-Fi passwords, and payment IDs are never uploaded or persisted by default. Sensitive elements are masked in UI diagnostics and audit logs.
+7. **No Guarantee of Safety:** Security assessments indicate the presence or absence of known risk indicators; no automated tool can guarantee that an external destination is free of risk.
 
 ---
 
@@ -235,24 +269,27 @@ python3 --version
 - [x] **Gate G3: SQLite KB & Evidence Fusion** — SHA-256 pattern matching, expiration enforcement, redacted history, and positive-proof tri-state fusion policy.
 - [x] **Gate G4: Diagnostic UI & ActionGateway** — Explainable diagnostic view, component status indicators, and single-use `ConsentToken` intent gatekeeper.
 - [x] **Gate G5: On-Device ML Architecture** — Lexical/statistical feature extraction vectors implemented; model adapter reporting unavailable status truthfully without fabricated scores.
-- [ ] **Gate G6: Optional Network Reputation & Redis Backend** — FastAPI service with Redis TTL cache and privacy-preserving lookup protocol.
-- [ ] **Gate G7: Signed KB Deltas & Synchronization** — Monotonic version updates and cryptographic signature verification.
-- [ ] **Gate G8: Release Hardening & Performance Benchmarks** — Production APK build, report export validation, and sub-100ms local evaluation benchmarking.
+- [x] **Gate G6: Network Reputation & Redis Backend** — FastAPI service with Redis TTL cache, strict PII-blocking schemas, and Dart `SafeReputationClient` with offline fallback.
+- [x] **Gate G7: Signed KB Deltas & Synchronization** — Monotonic version updates, anti-rollback checks, pinned key signature verification, and atomic rollback.
+- [x] **Gate G8: Release Hardening & Performance Benchmarks** — Assembled installable Android APK, verified sub-100ms local decision path latency, and built redacted audit report export.
 
 ---
 
 ## Testing and Quality Assurance
 
-Peek-in QR employs a Test-Driven Development (TDD) methodology with synthetic adversarial fixtures:
+Peek-in QR employs a Test-Driven Development (TDD) methodology with synthetic adversarial fixtures and automated backend testing:
 
 ### Test Execution Commands
 
 ```bash
-# Execute full mobile test suite
+# Execute mobile client test suite (56 tests)
 cd apps/mobile && flutter test
 
 # Run strict Dart static analysis
 cd apps/mobile && flutter analyze --fatal-infos
+
+# Execute backend reputation test suite (6 tests)
+PYTHONPATH=. pytest -o cache_dir=/tmp/.pytest_cache services/reputation/tests/
 
 # Run repository security checks
 python3 scripts/security_check.py
@@ -263,6 +300,8 @@ python3 scripts/security_check.py
 - **Adversarial Fixtures (`test/fixtures/adversarial_fixtures.dart`):** Tests IPv4 dotted-decimal, hex IP literals, IPv6 literals, Punycode IDN confusables, embedded userinfo, duplicate query parameters, malformed UPI handles, open Wi-Fi payloads, and prompt injection strings.
 - **Fusion Decision Truth Tables (`test/fusion_engine_test.dart`):** Verifies that absence of proof defaults to `UNKNOWN`, positive proof produces `VERIFIED`, contradictory warnings downgrade trust, and malicious indicators trigger `SUSPICIOUS`.
 - **ActionGateway Bounds (`test/action_gateway_test.dart`):** Verifies single-use token consumption, rejection of stale/expired tokens, hard blocking of suspicious payloads, and two-step confirmation on unknown payloads.
+- **Backend Schema Enforcement (`services/reputation/tests/test_reputation_api.py`):** Asserts that any attempt to transmit raw URLs, query strings, or PII receives an immediate HTTP 422 Unprocessable Entity error.
+- **Local Latency Benchmarks (`test/performance_benchmark_test.dart`):** Verifies that warm and cold local evaluation latency is well below the proposal's <100ms budget.
 
 ---
 

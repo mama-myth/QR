@@ -6,7 +6,8 @@ import 'kb_sync.dart';
 /// Outcome of applying a signed delta update.
 class DeltaApplyResult {
   final bool success;
-  final String status; // 'APPLIED', 'REJECTED_SIGNATURE', 'REJECTED_ROLLBACK', 'VALIDATION_FAILED'
+  final String
+  status; // 'APPLIED', 'REJECTED_SIGNATURE', 'REJECTED_ROLLBACK', 'VALIDATION_FAILED'
   final String message;
   final int version;
 
@@ -27,8 +28,10 @@ class KnowledgeBaseRepository {
   final List<ScanRecord> _scanHistory = [];
   int _currentVersion = 1;
 
-  KnowledgeBaseRepository({List<KnowledgeBaseEntry>? initialEntries, int initialVersion = 1})
-      : _currentVersion = initialVersion {
+  KnowledgeBaseRepository({
+    List<KnowledgeBaseEntry>? initialEntries,
+    int initialVersion = 1,
+  }) : _currentVersion = initialVersion {
     if (initialEntries != null) {
       for (final entry in initialEntries) {
         addEntry(entry);
@@ -47,7 +50,9 @@ class KnowledgeBaseRepository {
 
   /// Lookup a target identifier (e.g. domain name, UPI payee handle).
   KnowledgeBaseEntry? lookup(String identifier) {
-    final hash = sha256.convert(utf8.encode(identifier.trim().toLowerCase())).toString();
+    final hash = sha256
+        .convert(utf8.encode(identifier.trim().toLowerCase()))
+        .toString();
     final entry = _entriesByHash[hash];
     if (entry != null && !entry.isExpired) {
       return entry;
@@ -73,14 +78,16 @@ class KnowledgeBaseRepository {
         return DeltaApplyResult(
           success: false,
           status: 'REJECTED_ROLLBACK',
-          message: 'Delta version (${delta.deltaVersion}) is <= current version ($_currentVersion). Anti-rollback triggered.',
+          message:
+              'Delta version (${delta.deltaVersion}) is <= current version ($_currentVersion). Anti-rollback triggered.',
           version: _currentVersion,
         );
       }
       return DeltaApplyResult(
         success: false,
         status: 'REJECTED_SIGNATURE',
-        message: 'Delta cryptographic signature or pinned key verification failed.',
+        message:
+            'Delta cryptographic signature or pinned key verification failed.',
         version: _currentVersion,
       );
     }
@@ -97,7 +104,9 @@ class KnowledgeBaseRepository {
       // Process new and updated entries with integrity validation
       for (final entry in delta.entries) {
         if (entry.entityId.isEmpty || entry.canonicalPattern.isEmpty) {
-          throw const FormatException('Invalid entry: missing entityId or pattern');
+          throw const FormatException(
+            'Invalid entry: missing entityId or pattern',
+          );
         }
         stagedEntries[entry.patternHash] = entry;
       }
@@ -118,7 +127,8 @@ class KnowledgeBaseRepository {
       return DeltaApplyResult(
         success: false,
         status: 'VALIDATION_FAILED',
-        message: 'Atomic transaction aborted: $e. Rolled back to last-known-good state.',
+        message:
+            'Atomic transaction aborted: $e. Rolled back to last-known-good state.',
         version: _currentVersion,
       );
     }

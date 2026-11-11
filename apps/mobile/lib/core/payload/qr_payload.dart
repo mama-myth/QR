@@ -16,8 +16,8 @@ class QRPayload {
     required this.entrypoint,
     required this.rawContent,
     DateTime? timestamp,
-  })  : scanId = scanId ?? _generateUuid(),
-        timestamp = timestamp ?? DateTime.now().toUtc();
+  }) : scanId = scanId ?? _generateUuid(),
+       timestamp = timestamp ?? DateTime.now().toUtc();
 
   static String _generateUuid() {
     final random = Random();

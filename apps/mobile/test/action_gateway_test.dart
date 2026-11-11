@@ -17,60 +17,69 @@ void main() {
   });
 
   group('ActionGateway Security Invariants', () {
-    test('strictly blocks SUSPICIOUS evaluation without executing intent', () async {
-      const evaluation = EvaluationResult(
-        state: EvaluationState.suspicious,
-        reasonCodes: ['RULE_URL_IP_HOST'],
-        userMessages: ['Host is an IP literal.'],
-        evidenceList: [],
-      );
+    test(
+      'strictly blocks SUSPICIOUS evaluation without executing intent',
+      () async {
+        const evaluation = EvaluationResult(
+          state: EvaluationState.suspicious,
+          reasonCodes: ['RULE_URL_IP_HOST'],
+          userMessages: ['Host is an IP literal.'],
+          evidenceList: [],
+        );
 
-      final token = gateway.createToken(
-        scanId: 'scan-1',
-        actionType: DestinationActionType.viewUrl,
-        canonicalTarget: 'http://192.168.1.1',
-      );
+        final token = gateway.createToken(
+          scanId: 'scan-1',
+          actionType: DestinationActionType.viewUrl,
+          canonicalTarget: 'http://192.168.1.1',
+        );
 
-      final res = await gateway.executeAction(evaluation: evaluation, token: token);
-      expect(res.success, isFalse);
-      expect(res.status, 'BLOCKED');
-      expect(dispatcher.dispatchedIntents, isEmpty);
-    });
+        final res = await gateway.executeAction(
+          evaluation: evaluation,
+          token: token,
+        );
+        expect(res.success, isFalse);
+        expect(res.status, 'BLOCKED');
+        expect(dispatcher.dispatchedIntents, isEmpty);
+      },
+    );
 
-    test('requires two-step user confirmation for UNKNOWN evaluation', () async {
-      const evaluation = EvaluationResult(
-        state: EvaluationState.unknown,
-        reasonCodes: ['NO_POSITIVE_PROOF'],
-        userMessages: ['Target is unproven.'],
-        evidenceList: [],
-      );
+    test(
+      'requires two-step user confirmation for UNKNOWN evaluation',
+      () async {
+        const evaluation = EvaluationResult(
+          state: EvaluationState.unknown,
+          reasonCodes: ['NO_POSITIVE_PROOF'],
+          userMessages: ['Target is unproven.'],
+          evidenceList: [],
+        );
 
-      final token = gateway.createToken(
-        scanId: 'scan-2',
-        actionType: DestinationActionType.viewUrl,
-        canonicalTarget: 'https://unregistered-site.com',
-      );
+        final token = gateway.createToken(
+          scanId: 'scan-2',
+          actionType: DestinationActionType.viewUrl,
+          canonicalTarget: 'https://unregistered-site.com',
+        );
 
-      // Attempt 1: without confirmation -> Rejected
-      final res1 = await gateway.executeAction(
-        evaluation: evaluation,
-        token: token,
-        userConfirmedUnknown: false,
-      );
-      expect(res1.success, isFalse);
-      expect(res1.status, 'REQUIRES_CONFIRMATION');
-      expect(dispatcher.dispatchedIntents, isEmpty);
+        // Attempt 1: without confirmation -> Rejected
+        final res1 = await gateway.executeAction(
+          evaluation: evaluation,
+          token: token,
+          userConfirmedUnknown: false,
+        );
+        expect(res1.success, isFalse);
+        expect(res1.status, 'REQUIRES_CONFIRMATION');
+        expect(dispatcher.dispatchedIntents, isEmpty);
 
-      // Attempt 2: with confirmation -> Executed
-      final res2 = await gateway.executeAction(
-        evaluation: evaluation,
-        token: token,
-        userConfirmedUnknown: true,
-      );
-      expect(res2.success, isTrue);
-      expect(res2.status, 'EXECUTED');
-      expect(dispatcher.dispatchedIntents.length, 1);
-    });
+        // Attempt 2: with confirmation -> Executed
+        final res2 = await gateway.executeAction(
+          evaluation: evaluation,
+          token: token,
+          userConfirmedUnknown: true,
+        );
+        expect(res2.success, isTrue);
+        expect(res2.status, 'EXECUTED');
+        expect(dispatcher.dispatchedIntents.length, 1);
+      },
+    );
 
     test('permits VERIFIED evaluation directly with valid token', () async {
       const evaluation = EvaluationResult(
@@ -86,35 +95,52 @@ void main() {
         canonicalTarget: 'https://portal.gov.example',
       );
 
-      final res = await gateway.executeAction(evaluation: evaluation, token: token);
+      final res = await gateway.executeAction(
+        evaluation: evaluation,
+        token: token,
+      );
       expect(res.success, isTrue);
       expect(res.status, 'EXECUTED');
-      expect(dispatcher.dispatchedIntents.contains('viewUrl:https://portal.gov.example'), isTrue);
+      expect(
+        dispatcher.dispatchedIntents.contains(
+          'viewUrl:https://portal.gov.example',
+        ),
+        isTrue,
+      );
     });
 
-    test('rejects duplicate or replayed consent tokens (prevent double-tap and replay)', () async {
-      const evaluation = EvaluationResult(
-        state: EvaluationState.verified,
-        reasonCodes: ['KB_POSITIVE_TRUST_VERIFIED'],
-        userMessages: ['Target identity authenticated.'],
-        evidenceList: [],
-      );
+    test(
+      'rejects duplicate or replayed consent tokens (prevent double-tap and replay)',
+      () async {
+        const evaluation = EvaluationResult(
+          state: EvaluationState.verified,
+          reasonCodes: ['KB_POSITIVE_TRUST_VERIFIED'],
+          userMessages: ['Target identity authenticated.'],
+          evidenceList: [],
+        );
 
-      final token = gateway.createToken(
-        scanId: 'scan-4',
-        actionType: DestinationActionType.viewUrl,
-        canonicalTarget: 'https://portal.gov.example',
-      );
+        final token = gateway.createToken(
+          scanId: 'scan-4',
+          actionType: DestinationActionType.viewUrl,
+          canonicalTarget: 'https://portal.gov.example',
+        );
 
-      // First execution succeeds
-      final res1 = await gateway.executeAction(evaluation: evaluation, token: token);
-      expect(res1.success, isTrue);
+        // First execution succeeds
+        final res1 = await gateway.executeAction(
+          evaluation: evaluation,
+          token: token,
+        );
+        expect(res1.success, isTrue);
 
-      // Second duplicate execution is rejected
-      final res2 = await gateway.executeAction(evaluation: evaluation, token: token);
-      expect(res2.success, isFalse);
-      expect(res2.status, 'STALE_TOKEN');
-    });
+        // Second duplicate execution is rejected
+        final res2 = await gateway.executeAction(
+          evaluation: evaluation,
+          token: token,
+        );
+        expect(res2.success, isFalse);
+        expect(res2.status, 'STALE_TOKEN');
+      },
+    );
 
     test('rejects expired consent tokens', () async {
       const evaluation = EvaluationResult(
@@ -133,16 +159,28 @@ void main() {
         validityDuration: const Duration(seconds: 30),
       );
 
-      final res = await gateway.executeAction(evaluation: evaluation, token: expiredToken);
+      final res = await gateway.executeAction(
+        evaluation: evaluation,
+        token: expiredToken,
+      );
       expect(res.success, isFalse);
       expect(res.status, 'EXPIRED_TOKEN');
     });
   });
 
   group('DiagnosticScreen UI and Consent Flow', () {
-    testWidgets('renders VERIFIED state and enables execution', (WidgetTester tester) async {
-      final qrPayload = QRPayload(entrypoint: 'tile', rawContent: 'https://portal.gov.example');
-      const parsedPayload = UrlPayload(rawInput: 'https://portal.gov.example', scheme: 'https', host: 'portal.gov.example');
+    testWidgets('renders VERIFIED state and enables execution', (
+      WidgetTester tester,
+    ) async {
+      final qrPayload = QRPayload(
+        entrypoint: 'tile',
+        rawContent: 'https://portal.gov.example',
+      );
+      const parsedPayload = UrlPayload(
+        rawInput: 'https://portal.gov.example',
+        scheme: 'https',
+        host: 'portal.gov.example',
+      );
       const evaluation = EvaluationResult(
         state: EvaluationState.verified,
         reasonCodes: ['KB_POSITIVE_TRUST_VERIFIED'],
@@ -174,9 +212,18 @@ void main() {
       expect(dispatcher.dispatchedIntents.length, 1);
     });
 
-    testWidgets('disables action execution button for SUSPICIOUS verdict', (WidgetTester tester) async {
-      final qrPayload = QRPayload(entrypoint: 'tile', rawContent: 'http://192.168.1.1');
-      const parsedPayload = UrlPayload(rawInput: 'http://192.168.1.1', scheme: 'http', host: '192.168.1.1');
+    testWidgets('disables action execution button for SUSPICIOUS verdict', (
+      WidgetTester tester,
+    ) async {
+      final qrPayload = QRPayload(
+        entrypoint: 'tile',
+        rawContent: 'http://192.168.1.1',
+      );
+      const parsedPayload = UrlPayload(
+        rawInput: 'http://192.168.1.1',
+        scheme: 'http',
+        host: '192.168.1.1',
+      );
       const evaluation = EvaluationResult(
         state: EvaluationState.suspicious,
         reasonCodes: ['RULE_URL_IP_HOST'],
@@ -196,58 +243,83 @@ void main() {
       );
 
       expect(find.text('VERDICT: SUSPICIOUS'), findsOneWidget);
-      expect(find.textContaining('This payload is SUSPICIOUS and has been blocked'), findsOneWidget);
+      expect(
+        find.textContaining('This payload is SUSPICIOUS and has been blocked'),
+        findsOneWidget,
+      );
 
       final proceedBtn = find.byKey(const Key('diagnostic_proceed_button'));
       expect(tester.widget<ElevatedButton>(proceedBtn).onPressed, isNull);
     });
 
-    testWidgets('requires checkbox selection for UNKNOWN verdict before proceed', (WidgetTester tester) async {
-      final qrPayload = QRPayload(entrypoint: 'app_icon', rawContent: 'https://unregistered-site.com');
-      const parsedPayload = UrlPayload(rawInput: 'https://unregistered-site.com', scheme: 'https', host: 'unregistered-site.com');
-      const evaluation = EvaluationResult(
-        state: EvaluationState.unknown,
-        reasonCodes: ['NO_POSITIVE_PROOF'],
-        userMessages: ['Target unproven.'],
-        evidenceList: [],
-      );
+    testWidgets(
+      'requires checkbox selection for UNKNOWN verdict before proceed',
+      (WidgetTester tester) async {
+        final qrPayload = QRPayload(
+          entrypoint: 'app_icon',
+          rawContent: 'https://unregistered-site.com',
+        );
+        const parsedPayload = UrlPayload(
+          rawInput: 'https://unregistered-site.com',
+          scheme: 'https',
+          host: 'unregistered-site.com',
+        );
+        const evaluation = EvaluationResult(
+          state: EvaluationState.unknown,
+          reasonCodes: ['NO_POSITIVE_PROOF'],
+          userMessages: ['Target unproven.'],
+          evidenceList: [],
+        );
 
-      await tester.pumpWidget(
-        MaterialApp(
-          home: DiagnosticScreen(
-            qrPayload: qrPayload,
-            parsedPayload: parsedPayload,
-            evaluation: evaluation,
-            actionGateway: gateway,
+        await tester.pumpWidget(
+          MaterialApp(
+            home: DiagnosticScreen(
+              qrPayload: qrPayload,
+              parsedPayload: parsedPayload,
+              evaluation: evaluation,
+              actionGateway: gateway,
+            ),
           ),
-        ),
-      );
+        );
 
-      expect(find.text('VERDICT: UNKNOWN'), findsOneWidget);
-      expect(find.byKey(const Key('unknown_consent_checkbox')), findsOneWidget);
+        expect(find.text('VERDICT: UNKNOWN'), findsOneWidget);
+        expect(
+          find.byKey(const Key('unknown_consent_checkbox')),
+          findsOneWidget,
+        );
 
-      // Ensure proceed button is visible in scrollview before tapping
-      await tester.ensureVisible(find.byKey(const Key('diagnostic_proceed_button')));
-      await tester.pumpAndSettle();
+        // Ensure proceed button is visible in scrollview before tapping
+        await tester.ensureVisible(
+          find.byKey(const Key('diagnostic_proceed_button')),
+        );
+        await tester.pumpAndSettle();
 
-      // Attempt to proceed without ticking checkbox -> shows requirement message
-      await tester.tap(find.byKey(const Key('diagnostic_proceed_button')));
-      await tester.pumpAndSettle();
-      expect(find.textContaining('Action requires explicit two-step confirmation'), findsOneWidget);
-      expect(dispatcher.dispatchedIntents, isEmpty);
+        // Attempt to proceed without ticking checkbox -> shows requirement message
+        await tester.tap(find.byKey(const Key('diagnostic_proceed_button')));
+        await tester.pumpAndSettle();
+        expect(
+          find.textContaining('Action requires explicit two-step confirmation'),
+          findsOneWidget,
+        );
+        expect(dispatcher.dispatchedIntents, isEmpty);
 
-      // Tick checkbox and proceed -> success
-      await tester.ensureVisible(find.byKey(const Key('unknown_consent_checkbox')));
-      await tester.pumpAndSettle();
-      await tester.tap(find.byKey(const Key('unknown_consent_checkbox')));
-      await tester.pumpAndSettle();
+        // Tick checkbox and proceed -> success
+        await tester.ensureVisible(
+          find.byKey(const Key('unknown_consent_checkbox')),
+        );
+        await tester.pumpAndSettle();
+        await tester.tap(find.byKey(const Key('unknown_consent_checkbox')));
+        await tester.pumpAndSettle();
 
-      await tester.ensureVisible(find.byKey(const Key('diagnostic_proceed_button')));
-      await tester.pumpAndSettle();
-      await tester.tap(find.byKey(const Key('diagnostic_proceed_button')));
-      await tester.pumpAndSettle();
+        await tester.ensureVisible(
+          find.byKey(const Key('diagnostic_proceed_button')),
+        );
+        await tester.pumpAndSettle();
+        await tester.tap(find.byKey(const Key('diagnostic_proceed_button')));
+        await tester.pumpAndSettle();
 
-      expect(dispatcher.dispatchedIntents.length, 1);
-    });
+        expect(dispatcher.dispatchedIntents.length, 1);
+      },
+    );
   });
 }

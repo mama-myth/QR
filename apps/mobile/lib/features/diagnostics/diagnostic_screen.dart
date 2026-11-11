@@ -162,7 +162,10 @@ class _DiagnosticScreenState extends State<DiagnosticScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text('Target (Redacted/Masked):', style: TextStyle(fontWeight: FontWeight.bold)),
+                    const Text(
+                      'Target (Redacted/Masked):',
+                      style: TextStyle(fontWeight: FontWeight.bold),
+                    ),
                     const SizedBox(height: 6),
                     Container(
                       padding: const EdgeInsets.all(8),
@@ -173,7 +176,10 @@ class _DiagnosticScreenState extends State<DiagnosticScreen> {
                       child: SelectableText(
                         widget.qrPayload.maskedPreview,
                         key: const Key('diagnostic_target_preview'),
-                        style: const TextStyle(fontFamily: 'monospace', fontSize: 13),
+                        style: const TextStyle(
+                          fontFamily: 'monospace',
+                          fontSize: 13,
+                        ),
                       ),
                     ),
                   ],
@@ -190,9 +196,21 @@ class _DiagnosticScreenState extends State<DiagnosticScreen> {
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceAround,
                   children: [
-                    _buildStatusChip('KB', widget.evaluation.degradationFlags['kbAvailable'] ?? false),
-                    _buildStatusChip('ML (M8)', widget.evaluation.degradationFlags['mlAvailable'] ?? false),
-                    _buildStatusChip('Network', widget.evaluation.degradationFlags['networkAvailable'] ?? false),
+                    _buildStatusChip(
+                      'KB',
+                      widget.evaluation.degradationFlags['kbAvailable'] ??
+                          false,
+                    ),
+                    _buildStatusChip(
+                      'ML (M8)',
+                      widget.evaluation.degradationFlags['mlAvailable'] ??
+                          false,
+                    ),
+                    _buildStatusChip(
+                      'Network',
+                      widget.evaluation.degradationFlags['networkAvailable'] ??
+                          false,
+                    ),
                   ],
                 ),
               ),
@@ -200,7 +218,10 @@ class _DiagnosticScreenState extends State<DiagnosticScreen> {
             const SizedBox(height: 16),
 
             // Evidence and Reasons
-            const Text('Explainable Evidence & Reasons:', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+            const Text(
+              'Explainable Evidence & Reasons:',
+              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+            ),
             const SizedBox(height: 8),
             ...widget.evaluation.userMessages.map(
               (msg) => Card(
@@ -231,7 +252,10 @@ class _DiagnosticScreenState extends State<DiagnosticScreen> {
                     Expanded(
                       child: Text(
                         'This payload is SUSPICIOUS and has been blocked to protect your device. No action can be launched.',
-                        style: TextStyle(color: Colors.red, fontWeight: FontWeight.bold),
+                        style: TextStyle(
+                          color: Colors.red,
+                          fontWeight: FontWeight.bold,
+                        ),
                       ),
                     ),
                   ],
@@ -269,7 +293,9 @@ class _DiagnosticScreenState extends State<DiagnosticScreen> {
                         });
                       },
                       dense: true,
-                      title: const Text('I understand the risks and explicitly wish to proceed'),
+                      title: const Text(
+                        'I understand the risks and explicitly wish to proceed',
+                      ),
                     ),
                   ],
                 ),
@@ -282,14 +308,18 @@ class _DiagnosticScreenState extends State<DiagnosticScreen> {
               Container(
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                  color: _executionResult!.success ? Colors.green.shade50 : Colors.red.shade50,
+                  color: _executionResult!.success
+                      ? Colors.green.shade50
+                      : Colors.red.shade50,
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: Text(
                   _executionResult!.message,
                   key: const Key('execution_result_message'),
                   style: TextStyle(
-                    color: _executionResult!.success ? Colors.green.shade800 : Colors.red.shade800,
+                    color: _executionResult!.success
+                        ? Colors.green.shade800
+                        : Colors.red.shade800,
                     fontWeight: FontWeight.bold,
                   ),
                 ),
@@ -317,7 +347,8 @@ class _DiagnosticScreenState extends State<DiagnosticScreen> {
                 Expanded(
                   child: ElevatedButton(
                     key: const Key('diagnostic_proceed_button'),
-                    onPressed: (state == EvaluationState.suspicious || _isExecuting)
+                    onPressed:
+                        (state == EvaluationState.suspicious || _isExecuting)
                         ? null
                         : _handleProceed,
                     style: ElevatedButton.styleFrom(
@@ -328,7 +359,10 @@ class _DiagnosticScreenState extends State<DiagnosticScreen> {
                         ? const SizedBox(
                             width: 20,
                             height: 20,
-                            child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
+                            child: CircularProgressIndicator(
+                              color: Colors.white,
+                              strokeWidth: 2,
+                            ),
                           )
                         : const Text('Proceed to Action'),
                   ),
@@ -348,7 +382,10 @@ class _DiagnosticScreenState extends State<DiagnosticScreen> {
         color: isAvailable ? Colors.green : Colors.grey,
         size: 16,
       ),
-      label: Text('$label: ${isAvailable ? 'OK' : 'OFF'}', style: const TextStyle(fontSize: 12)),
+      label: Text(
+        '$label: ${isAvailable ? 'OK' : 'OFF'}',
+        style: const TextStyle(fontSize: 12),
+      ),
     );
   }
 }

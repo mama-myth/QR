@@ -8,7 +8,9 @@ import 'package:peek_in_qr/core/payload/payload_parser.dart';
 void main() {
   group('FeatureExtractor Vectors', () {
     test('extracts lexical and statistical features for URLs', () {
-      final payload = PayloadParser.parse('https://example.com/login?token=abc');
+      final payload = PayloadParser.parse(
+        'https://example.com/login?token=abc',
+      );
       final vector = FeatureExtractor.extract(payload);
 
       expect(vector.features.containsKey('raw_length'), isTrue);
@@ -39,19 +41,27 @@ void main() {
   });
 
   group('MlModelAdapter and Fusion Fallback', () {
-    test('DefaultMlModelAdapter reports unavailable without throwing or fabricating scores', () async {
-      final adapter = DefaultMlModelAdapter();
-      expect(adapter.isModelLoaded, isFalse);
-      expect(adapter.metadata, isNull);
+    test(
+      'DefaultMlModelAdapter reports unavailable without throwing or fabricating scores',
+      () async {
+        final adapter = DefaultMlModelAdapter();
+        expect(adapter.isModelLoaded, isFalse);
+        expect(adapter.metadata, isNull);
 
-      final dummyVector = const FeatureVector({'raw_length': 20.0});
-      final result = await adapter.predict(dummyVector);
+        final dummyVector = const FeatureVector({'raw_length': 20.0});
+        final result = await adapter.predict(dummyVector);
 
-      expect(result.status, MlInferenceStatus.unavailable);
-      expect(result.confidence, isNull);
-      expect(result.predictedLabel, isNull);
-      expect(result.diagnosticReason.contains('No licensed, provenance-validated on-device ML model artifact is installed'), isTrue);
-    });
+        expect(result.status, MlInferenceStatus.unavailable);
+        expect(result.confidence, isNull);
+        expect(result.predictedLabel, isNull);
+        expect(
+          result.diagnosticReason.contains(
+            'No licensed, provenance-validated on-device ML model artifact is installed',
+          ),
+          isTrue,
+        );
+      },
+    );
 
     test('FusionEngine reflects mlAvailable degradation flag accurately', () {
       final adapter = DefaultMlModelAdapter();

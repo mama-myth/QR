@@ -1,17 +1,8 @@
 /// Severity levels for emitted rule evidence.
-enum RuleSeverity {
-  critical,
-  warning,
-  info,
-}
+enum RuleSeverity { critical, warning, info }
 
 /// Evaluation outcome for an individual deterministic rule.
-enum RuleOutcome {
-  matched,
-  notMatched,
-  inconclusive,
-  error,
-}
+enum RuleOutcome { matched, notMatched, inconclusive, error }
 
 /// Immutable evidence item produced by a deterministic security rule.
 ///
@@ -38,12 +29,12 @@ class RuleEvidence {
   });
 
   Map<String, dynamic> toJson() => {
-        'ruleId': ruleId,
-        'ruleVersion': ruleVersion,
-        'source': source,
-        'severity': severity.name,
-        'outcome': outcome.name,
-        'reasonMessage': reasonMessage,
-        'redactedDetails': redactedDetails,
-      };
+    'ruleId': ruleId,
+    'ruleVersion': ruleVersion,
+    'source': source,
+    'severity': severity.name,
+    'outcome': outcome.name,
+    'reasonMessage': reasonMessage,
+    'redactedDetails': redactedDetails,
+  };
 }

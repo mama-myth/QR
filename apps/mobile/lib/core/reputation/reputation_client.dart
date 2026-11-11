@@ -3,7 +3,8 @@ import 'package:crypto/crypto.dart';
 
 /// Threat reputation lookup response received from the backend service.
 class ReputationLookupResult {
-  final String status; // 'VERIFIED_MALICIOUS', 'CLEAN', 'UNAVAILABLE', 'UNKNOWN'
+  final String
+  status; // 'VERIFIED_MALICIOUS', 'CLEAN', 'UNAVAILABLE', 'UNKNOWN'
   final String tokenPrefix;
   final double? reputationScore;
   final bool cached;
@@ -38,9 +39,13 @@ class SafeReputationClient implements ReputationClient {
   SafeReputationClient({this.networkTransport});
 
   @override
-  Future<ReputationLookupResult> checkReputation(String canonicalIdentifier) async {
+  Future<ReputationLookupResult> checkReputation(
+    String canonicalIdentifier,
+  ) async {
     // 1. Hash the identifier (e.g. domain name)
-    final hashToken = sha256.convert(utf8.encode(canonicalIdentifier.trim().toLowerCase())).toString();
+    final hashToken = sha256
+        .convert(utf8.encode(canonicalIdentifier.trim().toLowerCase()))
+        .toString();
 
     // 2. Transmit only hash token, never raw payload or query string
     final requestBody = jsonEncode({
@@ -53,7 +58,8 @@ class SafeReputationClient implements ReputationClient {
         return const ReputationLookupResult(
           status: 'UNAVAILABLE',
           tokenPrefix: '',
-          message: 'Network reputation service disabled or transport unconfigured. Offline path active.',
+          message:
+              'Network reputation service disabled or transport unconfigured. Offline path active.',
         );
       }
 
@@ -78,7 +84,8 @@ class SafeReputationClient implements ReputationClient {
       return ReputationLookupResult(
         status: 'UNAVAILABLE',
         tokenPrefix: hashToken.substring(0, 16),
-        message: 'Network lookup failed ($e). Preserving safe offline behavior.',
+        message:
+            'Network lookup failed ($e). Preserving safe offline behavior.',
       );
     }
   }

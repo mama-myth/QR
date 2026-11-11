@@ -1,11 +1,7 @@
 import 'feature_extractor.dart';
 
 /// Status of on-device ML inference capability.
-enum MlInferenceStatus {
-  available,
-  unavailable,
-  error,
-}
+enum MlInferenceStatus { available, unavailable, error }
 
 /// Metadata contract for on-device machine learning models.
 class ModelMetadata {
@@ -67,7 +63,8 @@ class DefaultMlModelAdapter implements MlModelAdapter {
       status: MlInferenceStatus.unavailable,
       confidence: null,
       predictedLabel: null,
-      diagnosticReason: 'No licensed, provenance-validated on-device ML model artifact is installed. Preserving safe deterministic evaluation.',
+      diagnosticReason:
+          'No licensed, provenance-validated on-device ML model artifact is installed. Preserving safe deterministic evaluation.',
     );
   }
 }

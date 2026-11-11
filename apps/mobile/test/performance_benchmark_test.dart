@@ -12,17 +12,19 @@ void main() {
   late FusionEngine fusionEngine;
 
   setUp(() {
-    kbRepo = KnowledgeBaseRepository(initialEntries: [
-      KnowledgeBaseEntry(
-        entityId: 'gov_portal_01',
-        canonicalPattern: 'portal.gov.example',
-        category: 'GOVERNMENT',
-        trustAssertion: TrustAssertion.verifiedSafe,
-        signatureProvenance: 'root_ca_sec_2026',
-        versionId: 10,
-        expiresAt: DateTime.now().toUtc().add(const Duration(days: 365)),
-      ),
-    ]);
+    kbRepo = KnowledgeBaseRepository(
+      initialEntries: [
+        KnowledgeBaseEntry(
+          entityId: 'gov_portal_01',
+          canonicalPattern: 'portal.gov.example',
+          category: 'GOVERNMENT',
+          trustAssertion: TrustAssertion.verifiedSafe,
+          signatureProvenance: 'root_ca_sec_2026',
+          versionId: 10,
+          expiresAt: DateTime.now().toUtc().add(const Duration(days: 365)),
+        ),
+      ],
+    );
     fusionEngine = FusionEngine(kbRepository: kbRepo);
   });
 
@@ -70,30 +72,36 @@ void main() {
       expect(maxLatency, lessThan(100.0));
     });
 
-    test('generates redacted diagnostic audit report without leaking sensitive secrets', () {
-      final qrPayload = QRPayload(
-        entrypoint: 'tile',
-        rawContent: 'WIFI:S:SecretCorpOffice;T:WPA;P:SuperSecretP@ssword123;;',
-      );
-      final parsed = PayloadParser.parse(qrPayload.rawContent);
-      final evaluation = fusionEngine.evaluate(parsed);
+    test(
+      'generates redacted diagnostic audit report without leaking sensitive secrets',
+      () {
+        final qrPayload = QRPayload(
+          entrypoint: 'tile',
+          rawContent:
+              'WIFI:S:SecretCorpOffice;T:WPA;P:SuperSecretP@ssword123;;',
+        );
+        final parsed = PayloadParser.parse(qrPayload.rawContent);
+        final evaluation = fusionEngine.evaluate(parsed);
 
-      final report = DiagnosticReportGenerator.generateReport(
-        qrPayload: qrPayload,
-        parsedPayload: parsed,
-        evaluation: evaluation,
-        consentAction: 'BLOCKED',
-      );
+        final report = DiagnosticReportGenerator.generateReport(
+          qrPayload: qrPayload,
+          parsedPayload: parsed,
+          evaluation: evaluation,
+          consentAction: 'BLOCKED',
+        );
 
-      expect(report['reportVersion'], '1.0.0');
-      expect(report['scanMetadata']['entrypoint'], 'tile');
-      expect(report['scanMetadata']['payloadType'], 'WIFI');
-      expect(report['actionAudit']['consentAction'], 'BLOCKED');
+        expect(report['reportVersion'], '1.0.0');
+        expect(report['scanMetadata']['entrypoint'], 'tile');
+        expect(report['scanMetadata']['payloadType'], 'WIFI');
+        expect(report['actionAudit']['consentAction'], 'BLOCKED');
 
-      // Verify password is NOT in diagnosticProperties
-      final diagProps = report['targetSummary']['diagnosticProperties'] as Map<String, dynamic>;
-      expect(diagProps.containsKey('password'), isFalse);
-      expect(diagProps['hasPassword'], isTrue);
-    });
+        // Verify password is NOT in diagnosticProperties
+        final diagProps =
+            report['targetSummary']['diagnosticProperties']
+                as Map<String, dynamic>;
+        expect(diagProps.containsKey('password'), isFalse);
+        expect(diagProps['hasPassword'], isTrue);
+      },
+    );
   });
 }

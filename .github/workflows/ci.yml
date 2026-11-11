@@ -6,14 +6,75 @@ on:
   pull_request:
     branches: [ main ]
 
+permissions:
+  contents: read
+
 jobs:
-  security-and-lint:
+  security-and-policy:
+    name: Security & Policy Enforcement
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout repository
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+
       - name: Set up Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@42375524e23c412d93fb67b49958b491fce71c38 # v5.4.0
         with:
           python-version: '3.12'
-      - name: Run Security and Invariant Checks
+
+      - name: Run Secret and Repository Policy Scanner
         run: python3 scripts/security_check.py
+
+  mobile-ci:
+    name: Flutter Analysis & Tests
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+
+      - name: Set up Java 21
+        uses: actions/setup-java@3a4f6e1af504cf6a31855fa8f9c6aa88f1d6725b # v4.7.0
+        with:
+          distribution: 'temurin'
+          java-version: '21'
+
+      - name: Set up Flutter 3.41.2
+        uses: subosito/flutter-action@f2c4f66bb15b251bf4505611967e3057e478eb07 # v2.18.0
+        with:
+          flutter-version: '3.41.2'
+          channel: 'stable'
+
+      - name: Verify Flutter formatting
+        working-directory: apps/mobile
+        run: dart format --output=none --set-exit-if-changed .
+
+      - name: Install dependencies
+        working-directory: apps/mobile
+        run: flutter pub get
+
+      - name: Run Flutter static analysis
+        working-directory: apps/mobile
+        run: flutter analyze --fatal-infos
+
+      - name: Run Flutter unit & widget test suite
+        working-directory: apps/mobile
+        run: flutter test
+
+  backend-ci:
+    name: FastAPI Reputation Backend Tests
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+
+      - name: Set up Python 3.12
+        uses: actions/setup-python@42375524e23c412d93fb67b49958b491fce71c38 # v5.4.0
+        with:
+          python-version: '3.12'
+
+      - name: Install dependencies
+        working-directory: services/reputation
+        run: pip install -r requirements.txt
+
+      - name: Run Backend Pytest Suite
+        run: PYTHONPATH=. pytest -o cache_dir=/tmp/.pytest_cache services/reputation/tests/

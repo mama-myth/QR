@@ -1,11 +1,7 @@
 import '../rules/rule_evidence.dart';
 
 /// The authoritative tri-state evaluation verdict.
-enum EvaluationState {
-  verified,
-  unknown,
-  suspicious,
-}
+enum EvaluationState { verified, unknown, suspicious }
 
 /// The aggregated evaluation result produced by the Evidence Fusion Engine.
 ///
@@ -35,12 +31,12 @@ class EvaluationResult {
   });
 
   Map<String, dynamic> toJson() => {
-        'state': state.name.toUpperCase(),
-        'reasonCodes': reasonCodes,
-        'userMessages': userMessages,
-        'evaluatedOnline': evaluatedOnline,
-        'degradationFlags': degradationFlags,
-        'policyVersion': policyVersion,
-        'evidence': evidenceList.map((e) => e.toJson()).toList(),
-      };
+    'state': state.name.toUpperCase(),
+    'reasonCodes': reasonCodes,
+    'userMessages': userMessages,
+    'evaluatedOnline': evaluatedOnline,
+    'degradationFlags': degradationFlags,
+    'policyVersion': policyVersion,
+    'evidence': evidenceList.map((e) => e.toJson()).toList(),
+  };
 }

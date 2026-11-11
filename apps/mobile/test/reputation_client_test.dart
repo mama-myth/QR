@@ -3,13 +3,19 @@ import 'package:peek_in_qr/core/reputation/reputation_client.dart';
 
 void main() {
   group('SafeReputationClient Invariants', () {
-    test('defaults to UNAVAILABLE when network transport is unconfigured', () async {
-      final client = SafeReputationClient();
-      final res = await client.checkReputation('example.com');
+    test(
+      'defaults to UNAVAILABLE when network transport is unconfigured',
+      () async {
+        final client = SafeReputationClient();
+        final res = await client.checkReputation('example.com');
 
-      expect(res.status, 'UNAVAILABLE');
-      expect(res.message.contains('disabled or transport unconfigured'), isTrue);
-    });
+        expect(res.status, 'UNAVAILABLE');
+        expect(
+          res.message.contains('disabled or transport unconfigured'),
+          isTrue,
+        );
+      },
+    );
 
     test('hashes identifier and parses malicious response safely', () async {
       String? sentBody;
@@ -19,7 +25,9 @@ void main() {
       }
 
       final client = SafeReputationClient(networkTransport: mockTransport);
-      final res = await client.checkReputation('malicious-site.attacker.invalid');
+      final res = await client.checkReputation(
+        'malicious-site.attacker.invalid',
+      );
 
       expect(sentBody, isNotNull);
       expect(sentBody!.contains('lookup_token'), isTrue);
@@ -30,16 +38,19 @@ void main() {
       expect(res.reputationScore, 0.95);
     });
 
-    test('network transport timeout falls back to UNAVAILABLE safely', () async {
-      Future<String?> timeoutTransport(String body) async {
-        return null; // Simulates timeout
-      }
+    test(
+      'network transport timeout falls back to UNAVAILABLE safely',
+      () async {
+        Future<String?> timeoutTransport(String body) async {
+          return null; // Simulates timeout
+        }
 
-      final client = SafeReputationClient(networkTransport: timeoutTransport);
-      final res = await client.checkReputation('timeout.example.com');
+        final client = SafeReputationClient(networkTransport: timeoutTransport);
+        final res = await client.checkReputation('timeout.example.com');
 
-      expect(res.status, 'UNAVAILABLE');
-      expect(res.message.contains('timeout or unreachable'), isTrue);
-    });
+        expect(res.status, 'UNAVAILABLE');
+        expect(res.message.contains('timeout or unreachable'), isTrue);
+      },
+    );
   });
 }

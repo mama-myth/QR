@@ -14,13 +14,13 @@ class FusionEngine {
   final KnowledgeBaseRepository? kbRepository;
   final MlModelAdapter? mlAdapter;
 
-  const FusionEngine({
-    this.kbRepository,
-    this.mlAdapter,
-  });
+  const FusionEngine({this.kbRepository, this.mlAdapter});
 
   /// Evaluates a parsed payload deterministically across rule engine, KB, and ML adapter.
-  EvaluationResult evaluate(ParsedPayload payload, {bool isNetworkAvailable = false}) {
+  EvaluationResult evaluate(
+    ParsedPayload payload, {
+    bool isNetworkAvailable = false,
+  }) {
     final degradationFlags = <String, bool>{
       'kbAvailable': kbRepository != null,
       'mlAvailable': mlAdapter != null && mlAdapter!.isModelLoaded,
@@ -33,7 +33,11 @@ class FusionEngine {
 
     // Check for Critical Malicious Evidence
     final criticalMatches = evidence
-        .where((e) => e.severity == RuleSeverity.critical && e.outcome == RuleOutcome.matched)
+        .where(
+          (e) =>
+              e.severity == RuleSeverity.critical &&
+              e.outcome == RuleOutcome.matched,
+        )
         .toList();
 
     for (final e in criticalMatches) {
@@ -57,9 +61,12 @@ class FusionEngine {
     }
 
     // 1. If KB lists the entity as known malicious, treat as SUSPICIOUS
-    if (kbEntry != null && kbEntry.trustAssertion == TrustAssertion.knownMalicious) {
+    if (kbEntry != null &&
+        kbEntry.trustAssertion == TrustAssertion.knownMalicious) {
       reasonCodes.add('KB_KNOWN_MALICIOUS');
-      userMessages.add('Target is cataloged as known malicious in the local Knowledge Base.');
+      userMessages.add(
+        'Target is cataloged as known malicious in the local Knowledge Base.',
+      );
       return EvaluationResult(
         state: EvaluationState.suspicious,
         reasonCodes: reasonCodes,
@@ -87,7 +94,11 @@ class FusionEngine {
     // 3. Positive Trust Proof Check for VERIFIED
     // Mandate: VERIFIED strictly requires positive, authenticated, fresh trust proof AND no warnings/contradictions.
     final warningMatches = evidence
-        .where((e) => e.severity == RuleSeverity.warning && e.outcome == RuleOutcome.matched)
+        .where(
+          (e) =>
+              e.severity == RuleSeverity.warning &&
+              e.outcome == RuleOutcome.matched,
+        )
         .toList();
 
     for (final e in warningMatches) {
@@ -99,7 +110,9 @@ class FusionEngine {
 
     if (hasPositiveProof && warningMatches.isEmpty && !payload.isMalformed) {
       reasonCodes.add('KB_POSITIVE_TRUST_VERIFIED');
-      userMessages.add('Target identity is cryptographically authenticated and registered in the Knowledge Base (${kbEntry.category}).');
+      userMessages.add(
+        'Target identity is cryptographically authenticated and registered in the Knowledge Base (${kbEntry.category}).',
+      );
       return EvaluationResult(
         state: EvaluationState.verified,
         reasonCodes: reasonCodes,
@@ -114,10 +127,15 @@ class FusionEngine {
     // 4. Fallback / Default: UNKNOWN
     // Clean rules alone or lack of positive proof MUST result in UNKNOWN.
     if (warningMatches.isNotEmpty) {
-      userMessages.insert(0, 'Target contains potential risk factors or anomalies.');
+      userMessages.insert(
+        0,
+        'Target contains potential risk factors or anomalies.',
+      );
     } else {
       reasonCodes.add('NO_POSITIVE_PROOF');
-      userMessages.add('Target is not registered in the verified Knowledge Base. Proceed with caution.');
+      userMessages.add(
+        'Target is not registered in the verified Knowledge Base. Proceed with caution.',
+      );
     }
 
     return EvaluationResult(

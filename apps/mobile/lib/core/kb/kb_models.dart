@@ -2,11 +2,7 @@ import 'dart:convert';
 import 'package:crypto/crypto.dart';
 
 /// Trust assertion level stored in the Knowledge Base.
-enum TrustAssertion {
-  verifiedSafe,
-  knownMalicious,
-  neutral,
-}
+enum TrustAssertion { verifiedSafe, knownMalicious, neutral }
 
 /// An entry in the signed/versioned local Knowledge Base.
 ///
@@ -18,7 +14,8 @@ class KnowledgeBaseEntry {
   final String entityId;
   final String canonicalPattern;
   final String patternHash; // SHA-256 of canonical pattern
-  final String category; // 'BANKING', 'GOVERNMENT', 'MERCHANT', 'MALICIOUS_FEED', etc.
+  final String
+  category; // 'BANKING', 'GOVERNMENT', 'MERCHANT', 'MALICIOUS_FEED', etc.
   final TrustAssertion trustAssertion;
   final String signatureProvenance; // e.g. 'root_ca_2026'
   final int versionId;
@@ -47,15 +44,15 @@ class KnowledgeBaseEntry {
       signatureProvenance.isNotEmpty;
 
   Map<String, dynamic> toJson() => {
-        'entityId': entityId,
-        'canonicalPattern': canonicalPattern,
-        'patternHash': patternHash,
-        'category': category,
-        'trustAssertion': trustAssertion.name,
-        'signatureProvenance': signatureProvenance,
-        'versionId': versionId,
-        'expiresAt': expiresAt.toIso8601String(),
-      };
+    'entityId': entityId,
+    'canonicalPattern': canonicalPattern,
+    'patternHash': patternHash,
+    'category': category,
+    'trustAssertion': trustAssertion.name,
+    'signatureProvenance': signatureProvenance,
+    'versionId': versionId,
+    'expiresAt': expiresAt.toIso8601String(),
+  };
 }
 
 /// Redacted scan record saved in local scan history.
@@ -83,12 +80,12 @@ class ScanRecord {
   });
 
   Map<String, dynamic> toJson() => {
-        'scanId': scanId,
-        'timestamp': timestamp.toIso8601String(),
-        'payloadType': payloadType,
-        'evaluationState': evaluationState,
-        'reasonCodes': reasonCodes,
-        'consentAction': consentAction,
-        'redactedSummary': redactedSummary,
-      };
+    'scanId': scanId,
+    'timestamp': timestamp.toIso8601String(),
+    'payloadType': payloadType,
+    'evaluationState': evaluationState,
+    'reasonCodes': reasonCodes,
+    'consentAction': consentAction,
+    'redactedSummary': redactedSummary,
+  };
 }

@@ -4,7 +4,8 @@ import 'consent_token.dart';
 /// Execution outcome returned by the ActionGateway.
 class ActionExecutionResult {
   final bool success;
-  final String status; // 'EXECUTED', 'BLOCKED', 'CANCELLED', 'STALE_TOKEN', 'ERROR'
+  final String
+  status; // 'EXECUTED', 'BLOCKED', 'CANCELLED', 'STALE_TOKEN', 'ERROR'
   final String message;
 
   const ActionExecutionResult({
@@ -42,7 +43,7 @@ class ActionGateway {
   final Set<String> _usedTokenIds = {};
 
   ActionGateway({PlatformActionDispatcher? dispatcher})
-      : dispatcher = dispatcher ?? SafeActionDispatcher();
+    : dispatcher = dispatcher ?? SafeActionDispatcher();
 
   /// Creates a short-lived consent token for a specific scan evaluation.
   ConsentToken createToken({
@@ -70,7 +71,8 @@ class ActionGateway {
       return const ActionExecutionResult(
         success: false,
         status: 'BLOCKED',
-        message: 'Action blocked by security policy: Target is classified as SUSPICIOUS.',
+        message:
+            'Action blocked by security policy: Target is classified as SUSPICIOUS.',
       );
     }
 
@@ -79,7 +81,8 @@ class ActionGateway {
       return const ActionExecutionResult(
         success: false,
         status: 'REQUIRES_CONFIRMATION',
-        message: 'Action requires explicit two-step confirmation for UNKNOWN target.',
+        message:
+            'Action requires explicit two-step confirmation for UNKNOWN target.',
       );
     }
 
@@ -88,7 +91,8 @@ class ActionGateway {
       return const ActionExecutionResult(
         success: false,
         status: 'STALE_TOKEN',
-        message: 'Consent token has already been used. Duplicate execution rejected.',
+        message:
+            'Consent token has already been used. Duplicate execution rejected.',
       );
     }
 
@@ -96,7 +100,8 @@ class ActionGateway {
       return const ActionExecutionResult(
         success: false,
         status: 'EXPIRED_TOKEN',
-        message: 'Consent token expired. Please re-evaluate target before proceeding.',
+        message:
+            'Consent token expired. Please re-evaluate target before proceeding.',
       );
     }
 
@@ -106,7 +111,10 @@ class ActionGateway {
 
     // 5. Dispatch verified intent safely
     try {
-      final success = await dispatcher.launchIntent(token.actionType, token.canonicalTarget);
+      final success = await dispatcher.launchIntent(
+        token.actionType,
+        token.canonicalTarget,
+      );
       if (success) {
         return const ActionExecutionResult(
           success: true,

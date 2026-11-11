@@ -18,7 +18,11 @@ void main() {
       expect(urlPayload.hasEmbeddedCredentials, isFalse);
 
       final evidence = RuleEngine.evaluate(payload);
-      final criticals = evidence.where((e) => e.severity == RuleSeverity.critical && e.outcome == RuleOutcome.matched);
+      final criticals = evidence.where(
+        (e) =>
+            e.severity == RuleSeverity.critical &&
+            e.outcome == RuleOutcome.matched,
+      );
       expect(criticals, isEmpty);
     });
 
@@ -27,7 +31,9 @@ void main() {
       expect(payload.type, PayloadType.url);
 
       final evidence = RuleEngine.evaluate(payload);
-      final ipMatch = evidence.firstWhere((e) => e.ruleId == 'RULE_URL_IP_HOST');
+      final ipMatch = evidence.firstWhere(
+        (e) => e.ruleId == 'RULE_URL_IP_HOST',
+      );
       expect(ipMatch.outcome, RuleOutcome.matched);
       expect(ipMatch.severity, RuleSeverity.critical);
     });
@@ -35,32 +41,46 @@ void main() {
     test('detects hex IP host representation', () {
       final payload = PayloadParser.parse(AdversarialFixtures.hexIpHostUrl);
       final evidence = RuleEngine.evaluate(payload);
-      final ipMatch = evidence.firstWhere((e) => e.ruleId == 'RULE_URL_IP_HOST');
+      final ipMatch = evidence.firstWhere(
+        (e) => e.ruleId == 'RULE_URL_IP_HOST',
+      );
       expect(ipMatch.outcome, RuleOutcome.matched);
     });
 
     test('detects embedded userinfo credentials as critical evidence', () {
-      final payload = PayloadParser.parse(AdversarialFixtures.userinfoDeceptiveUrl);
+      final payload = PayloadParser.parse(
+        AdversarialFixtures.userinfoDeceptiveUrl,
+      );
       expect(payload.type, PayloadType.url);
 
       final evidence = RuleEngine.evaluate(payload);
-      final userinfoMatch = evidence.firstWhere((e) => e.ruleId == 'RULE_URL_USERINFO');
+      final userinfoMatch = evidence.firstWhere(
+        (e) => e.ruleId == 'RULE_URL_USERINFO',
+      );
       expect(userinfoMatch.outcome, RuleOutcome.matched);
       expect(userinfoMatch.severity, RuleSeverity.critical);
     });
 
     test('detects IDN Punycode confusables as warning evidence', () {
-      final payload = PayloadParser.parse(AdversarialFixtures.confusablePunycodeUrl);
+      final payload = PayloadParser.parse(
+        AdversarialFixtures.confusablePunycodeUrl,
+      );
       final evidence = RuleEngine.evaluate(payload);
-      final confusableMatch = evidence.firstWhere((e) => e.ruleId == 'RULE_URL_CONFUSABLE');
+      final confusableMatch = evidence.firstWhere(
+        (e) => e.ruleId == 'RULE_URL_CONFUSABLE',
+      );
       expect(confusableMatch.outcome, RuleOutcome.matched);
       expect(confusableMatch.severity, RuleSeverity.warning);
     });
 
     test('detects duplicate query parameters', () {
-      final payload = PayloadParser.parse(AdversarialFixtures.duplicateParamUrl);
+      final payload = PayloadParser.parse(
+        AdversarialFixtures.duplicateParamUrl,
+      );
       final evidence = RuleEngine.evaluate(payload);
-      final dupMatch = evidence.firstWhere((e) => e.ruleId == 'RULE_URL_DUPLICATE_PARAMS');
+      final dupMatch = evidence.firstWhere(
+        (e) => e.ruleId == 'RULE_URL_DUPLICATE_PARAMS',
+      );
       expect(dupMatch.outcome, RuleOutcome.matched);
       expect(dupMatch.severity, RuleSeverity.warning);
     });
@@ -78,7 +98,11 @@ void main() {
       expect(upi.amount, '250.00');
 
       final evidence = RuleEngine.evaluate(payload);
-      final criticals = evidence.where((e) => e.severity == RuleSeverity.critical && e.outcome == RuleOutcome.matched);
+      final criticals = evidence.where(
+        (e) =>
+            e.severity == RuleSeverity.critical &&
+            e.outcome == RuleOutcome.matched,
+      );
       expect(criticals, isEmpty);
     });
 
@@ -88,7 +112,9 @@ void main() {
       expect(payload.isMalformed, isTrue);
 
       final evidence = RuleEngine.evaluate(payload);
-      final malformedMatch = evidence.firstWhere((e) => e.ruleId == 'RULE_UPI_MALFORMED');
+      final malformedMatch = evidence.firstWhere(
+        (e) => e.ruleId == 'RULE_UPI_MALFORMED',
+      );
       expect(malformedMatch.outcome, RuleOutcome.matched);
       expect(malformedMatch.severity, RuleSeverity.critical);
     });
@@ -96,27 +122,41 @@ void main() {
     test('detects invalid VPA format', () {
       final payload = PayloadParser.parse(AdversarialFixtures.invalidVpaUpi);
       final evidence = RuleEngine.evaluate(payload);
-      final vpaMatch = evidence.firstWhere((e) => e.ruleId == 'RULE_UPI_INVALID_VPA_FORMAT');
+      final vpaMatch = evidence.firstWhere(
+        (e) => e.ruleId == 'RULE_UPI_INVALID_VPA_FORMAT',
+      );
       expect(vpaMatch.outcome, RuleOutcome.matched);
     });
 
     test('detects negative or non-numeric monetary amounts', () {
-      final negPayload = PayloadParser.parse(AdversarialFixtures.negativeAmountUpi);
+      final negPayload = PayloadParser.parse(
+        AdversarialFixtures.negativeAmountUpi,
+      );
       final negEvidence = RuleEngine.evaluate(negPayload);
-      final negMatch = negEvidence.firstWhere((e) => e.ruleId == 'RULE_UPI_INVALID_AMOUNT');
+      final negMatch = negEvidence.firstWhere(
+        (e) => e.ruleId == 'RULE_UPI_INVALID_AMOUNT',
+      );
       expect(negMatch.outcome, RuleOutcome.matched);
       expect(negMatch.severity, RuleSeverity.warning);
 
-      final nonNumPayload = PayloadParser.parse(AdversarialFixtures.nonNumericAmountUpi);
+      final nonNumPayload = PayloadParser.parse(
+        AdversarialFixtures.nonNumericAmountUpi,
+      );
       final nonNumEvidence = RuleEngine.evaluate(nonNumPayload);
-      final nonNumMatch = nonNumEvidence.firstWhere((e) => e.ruleId == 'RULE_UPI_INVALID_AMOUNT');
+      final nonNumMatch = nonNumEvidence.firstWhere(
+        (e) => e.ruleId == 'RULE_UPI_INVALID_AMOUNT',
+      );
       expect(nonNumMatch.outcome, RuleOutcome.matched);
     });
 
     test('detects duplicate parameters in UPI query', () {
-      final payload = PayloadParser.parse(AdversarialFixtures.duplicateParamUpi);
+      final payload = PayloadParser.parse(
+        AdversarialFixtures.duplicateParamUpi,
+      );
       final evidence = RuleEngine.evaluate(payload);
-      final dupMatch = evidence.firstWhere((e) => e.ruleId == 'RULE_UPI_DUPLICATE_PARAMS');
+      final dupMatch = evidence.firstWhere(
+        (e) => e.ruleId == 'RULE_UPI_DUPLICATE_PARAMS',
+      );
       expect(dupMatch.outcome, RuleOutcome.matched);
     });
   });
@@ -137,7 +177,9 @@ void main() {
       expect(payload.type, PayloadType.wifi);
 
       final evidence = RuleEngine.evaluate(payload);
-      final openMatch = evidence.firstWhere((e) => e.ruleId == 'RULE_WIFI_UNENCRYPTED');
+      final openMatch = evidence.firstWhere(
+        (e) => e.ruleId == 'RULE_WIFI_UNENCRYPTED',
+      );
       expect(openMatch.outcome, RuleOutcome.matched);
       expect(openMatch.severity, RuleSeverity.warning);
     });
@@ -147,7 +189,9 @@ void main() {
       expect(payload.isMalformed, isTrue);
 
       final evidence = RuleEngine.evaluate(payload);
-      final malformedMatch = evidence.firstWhere((e) => e.ruleId == 'RULE_WIFI_MALFORMED');
+      final malformedMatch = evidence.firstWhere(
+        (e) => e.ruleId == 'RULE_WIFI_MALFORMED',
+      );
       expect(malformedMatch.outcome, RuleOutcome.matched);
       expect(malformedMatch.severity, RuleSeverity.critical);
     });
@@ -166,14 +210,18 @@ void main() {
     test('flags premium rate numbers', () {
       final payload = PayloadParser.parse(AdversarialFixtures.premiumRatePhone);
       final evidence = RuleEngine.evaluate(payload);
-      final rateMatch = evidence.firstWhere((e) => e.ruleId == 'RULE_PHONE_PREMIUM_RATE');
+      final rateMatch = evidence.firstWhere(
+        (e) => e.ruleId == 'RULE_PHONE_PREMIUM_RATE',
+      );
       expect(rateMatch.outcome, RuleOutcome.matched);
     });
 
     test('flags control characters in phone numbers', () {
       final payload = PayloadParser.parse(AdversarialFixtures.controlCharPhone);
       final evidence = RuleEngine.evaluate(payload);
-      final ctrlMatch = evidence.firstWhere((e) => e.ruleId == 'RULE_PHONE_CONTROL_CHARS');
+      final ctrlMatch = evidence.firstWhere(
+        (e) => e.ruleId == 'RULE_PHONE_CONTROL_CHARS',
+      );
       expect(ctrlMatch.outcome, RuleOutcome.matched);
       expect(ctrlMatch.severity, RuleSeverity.critical);
     });
@@ -181,27 +229,41 @@ void main() {
 
   group('Text & Prompt Injection Analyzers', () {
     test('treats prompt injection as untrusted data without authority', () {
-      final payload = PayloadParser.parse(AdversarialFixtures.promptInjectionText);
+      final payload = PayloadParser.parse(
+        AdversarialFixtures.promptInjectionText,
+      );
       expect(payload.type, PayloadType.text);
 
       final evidence = RuleEngine.evaluate(payload);
-      final injectionMatch = evidence.firstWhere((e) => e.ruleId == 'RULE_PROMPT_INJECTION');
+      final injectionMatch = evidence.firstWhere(
+        (e) => e.ruleId == 'RULE_PROMPT_INJECTION',
+      );
       expect(injectionMatch.outcome, RuleOutcome.matched);
       expect(injectionMatch.severity, RuleSeverity.warning);
-      expect(injectionMatch.reasonMessage.contains('Untrusted payload has no administrative or policy authority'), isTrue);
+      expect(
+        injectionMatch.reasonMessage.contains(
+          'Untrusted payload has no administrative or policy authority',
+        ),
+        isTrue,
+      );
     });
 
     test('detects control characters in text', () {
       final payload = PayloadParser.parse(AdversarialFixtures.controlCharText);
       final evidence = RuleEngine.evaluate(payload);
-      final ctrlMatch = evidence.firstWhere((e) => e.ruleId == 'RULE_TEXT_CONTROL_CHARS');
+      final ctrlMatch = evidence.firstWhere(
+        (e) => e.ruleId == 'RULE_TEXT_CONTROL_CHARS',
+      );
       expect(ctrlMatch.outcome, RuleOutcome.matched);
     });
 
     test('bounds oversized payload to prevent resource exhaustion', () {
       final payload = PayloadParser.parse(AdversarialFixtures.oversizedPayload);
       expect(payload.isMalformed, isTrue);
-      expect(payload.parseError!.contains('exceeds maximum bounded length'), isTrue);
+      expect(
+        payload.parseError!.contains('exceeds maximum bounded length'),
+        isTrue,
+      );
     });
   });
 }

@@ -15,7 +15,8 @@ class PayloadParser {
       return TextPayload(
         rawInput: raw.substring(0, maxInputLength),
         isMalformed: true,
-        parseError: 'Payload exceeds maximum bounded length ($maxInputLength characters)',
+        parseError:
+            'Payload exceeds maximum bounded length ($maxInputLength characters)',
         characterCount: raw.length,
       );
     }
@@ -50,7 +51,8 @@ class PayloadParser {
   static UrlPayload _parseUrl(String input) {
     try {
       final uri = Uri.parse(input);
-      if (uri.scheme.isEmpty || (uri.scheme != 'http' && uri.scheme != 'https')) {
+      if (uri.scheme.isEmpty ||
+          (uri.scheme != 'http' && uri.scheme != 'https')) {
         return UrlPayload(
           rawInput: input,
           isMalformed: true,
@@ -59,7 +61,9 @@ class PayloadParser {
       }
 
       // Detect duplicate query parameters
-      final queryPairs = uri.query.isNotEmpty ? uri.query.split('&') : <String>[];
+      final queryPairs = uri.query.isNotEmpty
+          ? uri.query.split('&')
+          : <String>[];
       final seenParams = <String>{};
       final duplicates = <String>[];
       for (final pair in queryPairs) {
@@ -81,7 +85,9 @@ class PayloadParser {
 
       // Check for Unicode confusables or non-ASCII characters in host
       final host = uri.host;
-      final hasConfusables = host.codeUnits.any((c) => c > 127) || host.toLowerCase().contains('xn--');
+      final hasConfusables =
+          host.codeUnits.any((c) => c > 127) ||
+          host.toLowerCase().contains('xn--');
 
       return UrlPayload(
         rawInput: input,
@@ -107,7 +113,9 @@ class PayloadParser {
   static UpiPayload _parseUpi(String input) {
     try {
       final uri = Uri.parse(input);
-      final queryPairs = uri.query.isNotEmpty ? uri.query.split('&') : <String>[];
+      final queryPairs = uri.query.isNotEmpty
+          ? uri.query.split('&')
+          : <String>[];
       final seenParams = <String>{};
       final duplicates = <String>[];
       final allParams = <String, String>{};
@@ -166,7 +174,9 @@ class PayloadParser {
   static PhonePayload _parsePhone(String input) {
     try {
       final rawNumber = input.substring(4); // strip 'tel:'
-      final containsControl = rawNumber.codeUnits.any((c) => c < 32 || c == 127);
+      final containsControl = rawNumber.codeUnits.any(
+        (c) => c < 32 || c == 127,
+      );
       // Sanitize: allow digits, +, *, #
       final sanitized = rawNumber.replaceAll(RegExp(r'[^0-9+*#]'), '');
 
@@ -177,7 +187,9 @@ class PayloadParser {
         sanitizedNumber: sanitized,
         containsControlChars: containsControl,
         isMalformed: isMalformed,
-        parseError: isMalformed ? 'Empty or invalid phone number in tel URI' : null,
+        parseError: isMalformed
+            ? 'Empty or invalid phone number in tel URI'
+            : null,
       );
     } catch (e) {
       return PhonePayload(
@@ -240,12 +252,16 @@ class PayloadParser {
       isHidden: hidden,
       hasPassword: password != null && password.isNotEmpty,
       isMalformed: isMalformed,
-      parseError: isMalformed ? 'Missing mandatory SSID in Wi-Fi payload' : null,
+      parseError: isMalformed
+          ? 'Missing mandatory SSID in Wi-Fi payload'
+          : null,
     );
   }
 
   static TextPayload _parseText(String input) {
-    final hasControl = input.codeUnits.any((c) => (c < 32 && c != 9 && c != 10 && c != 13) || c == 127);
+    final hasControl = input.codeUnits.any(
+      (c) => (c < 32 && c != 9 && c != 10 && c != 13) || c == 127,
+    );
     return TextPayload(
       rawInput: input,
       characterCount: input.length,

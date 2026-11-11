@@ -5,7 +5,8 @@ import 'package:peek_in_qr/core/kb/kb_sync.dart';
 
 void main() {
   const rootKeyId = 'root_ca_sec_2026';
-  const rootKeySecret = 'd07a9354024f8d951859d0739b81cf78696ec065d64817454868019e34a65ec0';
+  const rootKeySecret =
+      'd07a9354024f8d951859d0739b81cf78696ec065d64817454868019e34a65ec0';
 
   late KnowledgeBaseRepository repo;
 
@@ -72,60 +73,66 @@ void main() {
       expect(lookupRes!.entityId, 'entry_new_portal');
     });
 
-    test('strictly rejects tampered cryptographic signature and retains last known good state', () {
-      final newEntry = KnowledgeBaseEntry(
-        entityId: 'entry_hacked',
-        canonicalPattern: 'hacker-site.attacker.invalid',
-        category: 'GOVERNMENT',
-        trustAssertion: TrustAssertion.verifiedSafe,
-        signatureProvenance: 'root_ca_sec_2026',
-        versionId: 7,
-        expiresAt: DateTime.now().toUtc().add(const Duration(days: 90)),
-      );
+    test(
+      'strictly rejects tampered cryptographic signature and retains last known good state',
+      () {
+        final newEntry = KnowledgeBaseEntry(
+          entityId: 'entry_hacked',
+          canonicalPattern: 'hacker-site.attacker.invalid',
+          category: 'GOVERNMENT',
+          trustAssertion: TrustAssertion.verifiedSafe,
+          signatureProvenance: 'root_ca_sec_2026',
+          versionId: 7,
+          expiresAt: DateTime.now().toUtc().add(const Duration(days: 90)),
+        );
 
-      final tamperedDelta = SignedKnowledgeBaseDelta(
-        deltaVersion: 7,
-        entries: [newEntry],
-        revokedEntityIds: [],
-        timestamp: DateTime.now().toUtc(),
-        signerKeyId: rootKeyId,
-        signature: 'invalid_forged_signature_000000000000000000000000000000',
-      );
+        final tamperedDelta = SignedKnowledgeBaseDelta(
+          deltaVersion: 7,
+          entries: [newEntry],
+          revokedEntityIds: [],
+          timestamp: DateTime.now().toUtc(),
+          signerKeyId: rootKeyId,
+          signature: 'invalid_forged_signature_000000000000000000000000000000',
+        );
 
-      final res = repo.applySignedDelta(tamperedDelta);
-      expect(res.success, isFalse);
-      expect(res.status, 'REJECTED_SIGNATURE');
-      expect(repo.currentVersion, 5); // Unchanged
+        final res = repo.applySignedDelta(tamperedDelta);
+        expect(res.success, isFalse);
+        expect(res.status, 'REJECTED_SIGNATURE');
+        expect(repo.currentVersion, 5); // Unchanged
 
-      // Verify hacked entry was not applied
-      expect(repo.lookup('hacker-site.attacker.invalid'), isNull);
-    });
+        // Verify hacked entry was not applied
+        expect(repo.lookup('hacker-site.attacker.invalid'), isNull);
+      },
+    );
 
-    test('strictly rejects rollback attempt (deltaVersion <= currentVersion)', () {
-      final rollbackEntry = KnowledgeBaseEntry(
-        entityId: 'stale_entry',
-        canonicalPattern: 'stale.example',
-        category: 'MERCHANT',
-        trustAssertion: TrustAssertion.verifiedSafe,
-        signatureProvenance: 'root_ca_sec_2026',
-        versionId: 4,
-        expiresAt: DateTime.now().toUtc().add(const Duration(days: 30)),
-      );
+    test(
+      'strictly rejects rollback attempt (deltaVersion <= currentVersion)',
+      () {
+        final rollbackEntry = KnowledgeBaseEntry(
+          entityId: 'stale_entry',
+          canonicalPattern: 'stale.example',
+          category: 'MERCHANT',
+          trustAssertion: TrustAssertion.verifiedSafe,
+          signatureProvenance: 'root_ca_sec_2026',
+          versionId: 4,
+          expiresAt: DateTime.now().toUtc().add(const Duration(days: 30)),
+        );
 
-      final rollbackDelta = SignedKnowledgeBaseDelta(
-        deltaVersion: 4, // Current is 5
-        entries: [rollbackEntry],
-        revokedEntityIds: [],
-        timestamp: DateTime.now().toUtc(),
-        signerKeyId: rootKeyId,
-        signature: 'sig',
-      );
+        final rollbackDelta = SignedKnowledgeBaseDelta(
+          deltaVersion: 4, // Current is 5
+          entries: [rollbackEntry],
+          revokedEntityIds: [],
+          timestamp: DateTime.now().toUtc(),
+          signerKeyId: rootKeyId,
+          signature: 'sig',
+        );
 
-      final res = repo.applySignedDelta(rollbackDelta);
-      expect(res.success, isFalse);
-      expect(res.status, 'REJECTED_ROLLBACK');
-      expect(repo.currentVersion, 5);
-    });
+        final res = repo.applySignedDelta(rollbackDelta);
+        expect(res.success, isFalse);
+        expect(res.status, 'REJECTED_ROLLBACK');
+        expect(repo.currentVersion, 5);
+      },
+    );
 
     test('rejects unsigned or unpinned signer keys', () {
       final entry = KnowledgeBaseEntry(
@@ -152,44 +159,47 @@ void main() {
       expect(res.status, 'REJECTED_SIGNATURE');
     });
 
-    test('performs atomic rollback when entry validation fails during commit', () {
-      final invalidEntry = KnowledgeBaseEntry(
-        entityId: '', // Invalid empty entityId
-        canonicalPattern: '',
-        category: 'MERCHANT',
-        trustAssertion: TrustAssertion.verifiedSafe,
-        signatureProvenance: 'root_ca_sec_2026',
-        versionId: 8,
-        expiresAt: DateTime.now().toUtc().add(const Duration(days: 30)),
-      );
+    test(
+      'performs atomic rollback when entry validation fails during commit',
+      () {
+        final invalidEntry = KnowledgeBaseEntry(
+          entityId: '', // Invalid empty entityId
+          canonicalPattern: '',
+          category: 'MERCHANT',
+          trustAssertion: TrustAssertion.verifiedSafe,
+          signatureProvenance: 'root_ca_sec_2026',
+          versionId: 8,
+          expiresAt: DateTime.now().toUtc().add(const Duration(days: 30)),
+        );
 
-      final deltaWithoutSig = SignedKnowledgeBaseDelta(
-        deltaVersion: 8,
-        entries: [invalidEntry],
-        revokedEntityIds: [],
-        timestamp: DateTime.now().toUtc(),
-        signerKeyId: rootKeyId,
-        signature: '',
-      );
+        final deltaWithoutSig = SignedKnowledgeBaseDelta(
+          deltaVersion: 8,
+          entries: [invalidEntry],
+          revokedEntityIds: [],
+          timestamp: DateTime.now().toUtc(),
+          signerKeyId: rootKeyId,
+          signature: '',
+        );
 
-      final validSig = KnowledgeBaseDeltaVerifier.computeSignature(
-        deltaWithoutSig.canonicalDigestString,
-        rootKeySecret,
-      );
+        final validSig = KnowledgeBaseDeltaVerifier.computeSignature(
+          deltaWithoutSig.canonicalDigestString,
+          rootKeySecret,
+        );
 
-      final delta = SignedKnowledgeBaseDelta(
-        deltaVersion: 8,
-        entries: [invalidEntry],
-        revokedEntityIds: [],
-        timestamp: deltaWithoutSig.timestamp,
-        signerKeyId: rootKeyId,
-        signature: validSig,
-      );
+        final delta = SignedKnowledgeBaseDelta(
+          deltaVersion: 8,
+          entries: [invalidEntry],
+          revokedEntityIds: [],
+          timestamp: deltaWithoutSig.timestamp,
+          signerKeyId: rootKeyId,
+          signature: validSig,
+        );
 
-      final res = repo.applySignedDelta(delta);
-      expect(res.success, isFalse);
-      expect(res.status, 'VALIDATION_FAILED');
-      expect(repo.currentVersion, 5); // Rolled back
-    });
+        final res = repo.applySignedDelta(delta);
+        expect(res.success, isFalse);
+        expect(res.status, 'VALIDATION_FAILED');
+        expect(repo.currentVersion, 5); // Rolled back
+      },
+    );
   });
 }

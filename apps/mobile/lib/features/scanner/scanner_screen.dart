@@ -67,15 +67,17 @@ class _ScannerScreenState extends State<ScannerScreen> {
     final evaluation = _fusionEngine.evaluate(parsed);
 
     // Record redacted scan in repository history
-    _kbRepo.recordScan(ScanRecord(
-      scanId: _latestPayload!.scanId,
-      timestamp: _latestPayload!.timestamp,
-      payloadType: parsed.type.name.toUpperCase(),
-      evaluationState: evaluation.state.name.toUpperCase(),
-      reasonCodes: evaluation.reasonCodes,
-      consentAction: 'PENDING',
-      redactedSummary: _latestPayload!.maskedPreview,
-    ));
+    _kbRepo.recordScan(
+      ScanRecord(
+        scanId: _latestPayload!.scanId,
+        timestamp: _latestPayload!.timestamp,
+        payloadType: parsed.type.name.toUpperCase(),
+        evaluationState: evaluation.state.name.toUpperCase(),
+        reasonCodes: evaluation.reasonCodes,
+        consentAction: 'PENDING',
+        redactedSummary: _latestPayload!.maskedPreview,
+      ),
+    );
 
     Navigator.of(context).push(
       MaterialPageRoute(
@@ -145,7 +147,11 @@ class _ScannerScreenState extends State<ScannerScreen> {
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: const [
-                    Icon(Icons.qr_code_scanner, size: 64, color: Colors.white70),
+                    Icon(
+                      Icons.qr_code_scanner,
+                      size: 64,
+                      color: Colors.white70,
+                    ),
                     SizedBox(height: 8),
                     Text(
                       'Point camera at QR code',
@@ -221,13 +227,18 @@ class _ScannerScreenState extends State<ScannerScreen> {
                           SizedBox(width: 8),
                           Text(
                             'Captured Inert Payload (No Action Taken)',
-                            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                            style: TextStyle(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 16,
+                            ),
                           ),
                         ],
                       ),
                       const Divider(),
                       Text('Scan ID: ${_latestPayload!.scanId}'),
-                      Text('Timestamp: ${_latestPayload!.timestamp.toIso8601String()}'),
+                      Text(
+                        'Timestamp: ${_latestPayload!.timestamp.toIso8601String()}',
+                      ),
                       Text('Origin: ${_latestPayload!.entrypoint}'),
                       const SizedBox(height: 8),
                       const Text(

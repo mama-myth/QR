@@ -31,11 +31,15 @@ class FeatureExtractor {
       map['query_param_count'] = payload.queryParameters.length.toDouble();
       map['has_userinfo'] = payload.hasEmbeddedCredentials ? 1.0 : 0.0;
       map['has_confusable'] = payload.hasUnicodeConfusables ? 1.0 : 0.0;
-      map['has_duplicate_params'] = payload.duplicateParameters.isNotEmpty ? 1.0 : 0.0;
+      map['has_duplicate_params'] = payload.duplicateParameters.isNotEmpty
+          ? 1.0
+          : 0.0;
     } else if (payload is UpiPayload) {
       map['vpa_length'] = (payload.payeeVpa ?? '').length.toDouble();
       map['has_amount'] = payload.amount != null ? 1.0 : 0.0;
-      map['duplicate_params'] = payload.duplicateParameters.isNotEmpty ? 1.0 : 0.0;
+      map['duplicate_params'] = payload.duplicateParameters.isNotEmpty
+          ? 1.0
+          : 0.0;
     } else if (payload is WifiPayload) {
       map['ssid_length'] = (payload.ssid ?? '').length.toDouble();
       map['is_open'] = payload.authType.toUpperCase() == 'NOPASS' ? 1.0 : 0.0;

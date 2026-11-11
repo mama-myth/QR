@@ -22,7 +22,9 @@ class SignedKnowledgeBaseDelta {
 
   /// Generates the canonical serialized string representation used for signing and verification.
   String get canonicalDigestString {
-    final entryHashes = entries.map((e) => '${e.entityId}:${e.patternHash}:${e.versionId}').join(',');
+    final entryHashes = entries
+        .map((e) => '${e.entityId}:${e.patternHash}:${e.versionId}')
+        .join(',');
     final revokes = revokedEntityIds.join(',');
     return '$deltaVersion|$entryHashes|$revokes|${timestamp.toIso8601String()}|$signerKeyId';
   }
@@ -32,7 +34,8 @@ class SignedKnowledgeBaseDelta {
 class KnowledgeBaseDeltaVerifier {
   // Pinned trusted root signing keys
   static const Map<String, String> _pinnedKeys = {
-    'root_ca_sec_2026': 'd07a9354024f8d951859d0739b81cf78696ec065d64817454868019e34a65ec0',
+    'root_ca_sec_2026':
+        'd07a9354024f8d951859d0739b81cf78696ec065d64817454868019e34a65ec0',
   };
 
   /// Computes expected HMAC-SHA256 signature for a delta using a given key.
@@ -67,7 +70,10 @@ class KnowledgeBaseDeltaVerifier {
     }
 
     // 4. Verify cryptographic signature
-    final expectedSignature = computeSignature(delta.canonicalDigestString, pinnedSecret);
+    final expectedSignature = computeSignature(
+      delta.canonicalDigestString,
+      pinnedSecret,
+    );
     return expectedSignature == delta.signature;
   }
 }

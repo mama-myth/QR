@@ -26,7 +26,9 @@ class _PeekInQRAppState extends State<PeekInQRApp> {
 
   Future<void> _fetchLaunchEntrypoint() async {
     try {
-      final String? result = await platform.invokeMethod<String>('getLaunchEntrypoint');
+      final String? result = await platform.invokeMethod<String>(
+        'getLaunchEntrypoint',
+      );
       if (result != null && mounted) {
         setState(() {
           _entrypoint = result;

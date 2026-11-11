@@ -1,11 +1,5 @@
 /// Supported primary QR payload categories.
-enum PayloadType {
-  url,
-  upi,
-  phone,
-  wifi,
-  text,
-}
+enum PayloadType { url, upi, phone, wifi, text }
 
 /// Base abstract class for all typed, parsed QR payloads.
 ///
@@ -58,16 +52,16 @@ class UrlPayload extends ParsedPayload {
 
   @override
   Map<String, dynamic> get diagnosticProperties => {
-        'type': 'URL',
-        'scheme': scheme ?? '<none>',
-        'host': host ?? '<none>',
-        'port': port,
-        'path': path,
-        'hasUserInfo': hasEmbeddedCredentials,
-        'duplicateParams': duplicateParameters,
-        'isMalformed': isMalformed,
-        if (parseError != null) 'parseError': parseError,
-      };
+    'type': 'URL',
+    'scheme': scheme ?? '<none>',
+    'host': host ?? '<none>',
+    'port': port,
+    'path': path,
+    'hasUserInfo': hasEmbeddedCredentials,
+    'duplicateParams': duplicateParameters,
+    'isMalformed': isMalformed,
+    if (parseError != null) 'parseError': parseError,
+  };
 }
 
 /// Parsed representation of a UPI payment payload (`upi://pay`).
@@ -99,15 +93,15 @@ class UpiPayload extends ParsedPayload {
 
   @override
   Map<String, dynamic> get diagnosticProperties => {
-        'type': 'UPI',
-        'payeeVpa': payeeVpa != null ? _maskVpa(payeeVpa!) : '<missing>',
-        'payeeName': payeeName ?? '<none>',
-        'amount': amount ?? '<unspecified>',
-        'currency': currency ?? 'INR',
-        'duplicateParams': duplicateParameters,
-        'isMalformed': isMalformed,
-        if (parseError != null) 'parseError': parseError,
-      };
+    'type': 'UPI',
+    'payeeVpa': payeeVpa != null ? _maskVpa(payeeVpa!) : '<missing>',
+    'payeeName': payeeName ?? '<none>',
+    'amount': amount ?? '<unspecified>',
+    'currency': currency ?? 'INR',
+    'duplicateParams': duplicateParameters,
+    'isMalformed': isMalformed,
+    if (parseError != null) 'parseError': parseError,
+  };
 
   static String _maskVpa(String vpa) {
     final parts = vpa.split('@');
@@ -134,12 +128,12 @@ class PhonePayload extends ParsedPayload {
 
   @override
   Map<String, dynamic> get diagnosticProperties => {
-        'type': 'PHONE',
-        'sanitizedNumber': _maskPhone(sanitizedNumber),
-        'containsControlChars': containsControlChars,
-        'isMalformed': isMalformed,
-        if (parseError != null) 'parseError': parseError,
-      };
+    'type': 'PHONE',
+    'sanitizedNumber': _maskPhone(sanitizedNumber),
+    'containsControlChars': containsControlChars,
+    'isMalformed': isMalformed,
+    if (parseError != null) 'parseError': parseError,
+  };
 
   static String _maskPhone(String num) {
     if (num.length <= 4) return '***';
@@ -166,14 +160,14 @@ class WifiPayload extends ParsedPayload {
 
   @override
   Map<String, dynamic> get diagnosticProperties => {
-        'type': 'WIFI',
-        'ssid': ssid ?? '<unknown>',
-        'authType': authType,
-        'isHidden': isHidden,
-        'hasPassword': hasPassword,
-        'isMalformed': isMalformed,
-        if (parseError != null) 'parseError': parseError,
-      };
+    'type': 'WIFI',
+    'ssid': ssid ?? '<unknown>',
+    'authType': authType,
+    'isHidden': isHidden,
+    'hasPassword': hasPassword,
+    'isMalformed': isMalformed,
+    if (parseError != null) 'parseError': parseError,
+  };
 }
 
 /// Parsed representation of an arbitrary text or fallback payload.
@@ -191,10 +185,10 @@ class TextPayload extends ParsedPayload {
 
   @override
   Map<String, dynamic> get diagnosticProperties => {
-        'type': 'TEXT',
-        'characterCount': characterCount,
-        'containsControlChars': containsControlChars,
-        'isMalformed': isMalformed,
-        if (parseError != null) 'parseError': parseError,
-      };
+    'type': 'TEXT',
+    'characterCount': characterCount,
+    'containsControlChars': containsControlChars,
+    'isMalformed': isMalformed,
+    if (parseError != null) 'parseError': parseError,
+  };
 }

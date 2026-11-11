@@ -34,8 +34,8 @@ def scan_files(root_dir="."):
     violations = []
     md_files = []
     for dirpath, dirnames, filenames in os.walk(root_dir):
-        # Skip git and build output directories
-        for ignored in [".git", ".dart_tool", "build", ".gradle"]:
+        # Skip git, pytest cache, and build output directories
+        for ignored in [".git", ".dart_tool", "build", ".gradle", ".pytest_cache"]:
             if ignored in dirnames:
                 dirnames.remove(ignored)
 

@@ -34,10 +34,10 @@ def scan_files(root_dir="."):
     violations = []
     md_files = []
     for dirpath, dirnames, filenames in os.walk(root_dir):
-        if ".git" in dirnames:
-            dirnames.remove(".git")
-        if ".dart_tool" in dirnames:
-            dirnames.remove(".dart_tool")
+        # Skip git and build output directories
+        for ignored in [".git", ".dart_tool", "build", ".gradle"]:
+            if ignored in dirnames:
+                dirnames.remove(ignored)
 
         for fname in filenames:
             rel_path = os.path.relpath(os.path.join(dirpath, fname), root_dir)

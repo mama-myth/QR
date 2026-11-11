@@ -1,19 +1,26 @@
 import 'package:flutter/material.dart';
+import '../../core/execution/action_gateway.dart';
+import '../../core/fusion/fusion_engine.dart';
+import '../../core/kb/kb_models.dart';
+import '../../core/kb/kb_repository.dart';
+import '../../core/payload/payload_parser.dart';
 import '../../core/payload/qr_payload.dart';
+import '../diagnostics/diagnostic_screen.dart';
 
-/// Scanner screen that captures QR payloads in an inert state.
-///
-/// Invariant:
-/// Upon scanning or inputting a QR payload, it is displayed in the inert
-/// capture view. No external URL open, payment application launch, or
-/// phone dialing is triggered.
+/// Scanner screen that captures QR payloads in an inert state,
+/// runs deterministic evaluation, records redacted history, and navigates
+/// to diagnostics for ActionGateway consent.
 class ScannerScreen extends StatefulWidget {
   final String initialEntrypoint;
+  final KnowledgeBaseRepository? kbRepository;
+  final ActionGateway? actionGateway;
   final Function(QRPayload)? onPayloadCaptured;
 
   const ScannerScreen({
     super.key,
     this.initialEntrypoint = 'app_icon',
+    this.kbRepository,
+    this.actionGateway,
     this.onPayloadCaptured,
   });
 
@@ -23,7 +30,18 @@ class ScannerScreen extends StatefulWidget {
 
 class _ScannerScreenState extends State<ScannerScreen> {
   final TextEditingController _mockInputController = TextEditingController();
+  late final KnowledgeBaseRepository _kbRepo;
+  late final ActionGateway _actionGateway;
+  late final FusionEngine _fusionEngine;
   QRPayload? _latestPayload;
+
+  @override
+  void initState() {
+    super.initState();
+    _kbRepo = widget.kbRepository ?? KnowledgeBaseRepository();
+    _actionGateway = widget.actionGateway ?? ActionGateway();
+    _fusionEngine = FusionEngine(kbRepository: _kbRepo);
+  }
 
   void _handlePayload(String rawString) {
     if (rawString.isEmpty) return;
@@ -40,6 +58,35 @@ class _ScannerScreenState extends State<ScannerScreen> {
     if (widget.onPayloadCaptured != null) {
       widget.onPayloadCaptured!(payload);
     }
+  }
+
+  void _navigateToDiagnostics() {
+    if (_latestPayload == null) return;
+
+    final parsed = PayloadParser.parse(_latestPayload!.rawContent);
+    final evaluation = _fusionEngine.evaluate(parsed);
+
+    // Record redacted scan in repository history
+    _kbRepo.recordScan(ScanRecord(
+      scanId: _latestPayload!.scanId,
+      timestamp: _latestPayload!.timestamp,
+      payloadType: parsed.type.name.toUpperCase(),
+      evaluationState: evaluation.state.name.toUpperCase(),
+      reasonCodes: evaluation.reasonCodes,
+      consentAction: 'PENDING',
+      redactedSummary: _latestPayload!.maskedPreview,
+    ));
+
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) => DiagnosticScreen(
+          qrPayload: _latestPayload!,
+          parsedPayload: parsed,
+          evaluation: evaluation,
+          actionGateway: _actionGateway,
+        ),
+      ),
+    );
   }
 
   @override
@@ -204,6 +251,17 @@ class _ScannerScreenState extends State<ScannerScreen> {
                       const SizedBox(height: 12),
                       Row(
                         children: [
+                          ElevatedButton.icon(
+                            key: const Key('inspect_diagnostics_button'),
+                            onPressed: _navigateToDiagnostics,
+                            icon: const Icon(Icons.analytics_outlined),
+                            label: const Text('Inspect Diagnostics'),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Colors.indigo,
+                              foregroundColor: Colors.white,
+                            ),
+                          ),
+                          const SizedBox(width: 8),
                           OutlinedButton.icon(
                             key: const Key('clear_payload_button'),
                             onPressed: () {
